@@ -33,7 +33,7 @@ export function createDemoApi(storage?: Pick<Storage, 'getItem' | 'setItem'>) {
       if (!t.fields.length) issues.push({ code: 'fields', title: '尚未配置字段', detail: `${t.name}需要至少一个字段。`, target: { area: 'fields', templateId: t.id } });
       for (const f of t.fields) if (!f.region && !f.anchor || f.review === 'pending') issues.push({ code: 'localization', title: `确认字段：${f.name}`, detail: '确认定位与规则后再发布。', target: { area: 'fields', templateId: t.id, fieldId: f.id } });
     }
-    if (!record.lastTest || !Object.values(record.lastTest.templates).length || Object.values(record.lastTest.templates).some(t => !t.passed)) issues.push({ code: 'test', title: '完成一次规则测试', detail: '在单份测试中运行当前演示规则。', target: { area: 'test' } });
+    if (!record.lastTest || !Object.values(record.lastTest.templates).length || Object.values(record.lastTest.templates).some(t => !t.passed)) issues.push({ code: 'test', title: '完成一次规则测试', detail: '在单份调试中运行当前演示规则。', target: { area: 'test' } });
     return { ready: !issues.length, unchanged: JSON.stringify(record.draft) === JSON.stringify(record.publishedDraft), currentVersion: record.versions.at(-1) || '',
       nextVersion: `1.0.${record.versions.length}`, issues };
   }

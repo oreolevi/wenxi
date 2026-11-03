@@ -22,7 +22,7 @@ def service_check(record):
         schema = lambda t: sorted((f['key'], f['name'], f['kind'], f['required']) for f in t['fields'])
         for template in templates[1:]:
             if schema(template) != schema(templates[0]):
-                issues.append(_issue('schema', f"{template['name']}：补齐字段定义", '同一解析器的各版式应使用相同字段定义，请补齐字段后再发布。', 'fields', templateId=template['id']))
+                issues.append(_issue('schema', f"{template['name']}：补齐字段定义", '同一服务的各版式应使用相同字段定义，请补齐字段后再发布。', 'fields', templateId=template['id']))
     for template in templates:
         target = {'templateId': template['id']}
         if template.get('classification') == 'suggested' or (draft.get('materialTypes') and not template.get('materialTypeId')):
@@ -70,7 +70,7 @@ def scene_check(record):
         try:
             frozen = profiles.published(binding['parserId'], binding['version'])
             if len(frozen.get('materialTypes', [])) > 1:
-                issues.append(_issue('legacy', f"{binding['name']}：更新服务引用", '请使用拆分后的独立解析器。', 'services', **target))
+                issues.append(_issue('legacy', f"{binding['name']}：更新服务引用", '请使用拆分后的独立服务。', 'services', **target))
         except (ValueError, FileNotFoundError):
             issues.append(_issue('missing-version', f"{binding['name']}：引用版本不可用", '此服务的已发布版本不存在，请重新选择。', 'services', **target))
     digest = scenes.digest(draft)

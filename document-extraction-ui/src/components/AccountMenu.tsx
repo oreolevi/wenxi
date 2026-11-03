@@ -72,7 +72,7 @@ export function AccountMenu({ collapsed, onHelp, sidebarCollapsed, onSidebarChan
     { key: 'settings', icon: <SettingOutlined />, label: '设置' },
     { key: 'account', icon: <UserOutlined />, label: '账户信息' },
     { type: 'divider' },
-    { key: 'help', icon: <InfoCircleOutlined />, label: '使用说明' },
+    { key: 'help', icon: <InfoCircleOutlined />, label: '帮助中心' },
     { key: 'logout', icon: <LogoutOutlined />, label: '退出演示账户' },
   ];
   function select(key: string) {

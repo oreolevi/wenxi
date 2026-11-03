@@ -38,7 +38,7 @@ def records():
         if not row.get('scope'):
             legacy += 1
         elif row['scope'] == 'document':
-            rows.append({**row, 'kind': 'document', 'name': '文档解析', 'targetId': '', 'version': ''})
+            rows.append({**row, 'kind': 'document', 'name': '文析', 'targetId': '', 'version': ''})
         # Internal OCR/sample preparation is not another external API invocation.
     for kind, folder, definition in [('service', 'runs', 'profiles'), ('scene', 'scene-runs', 'scenes')]:
         for path in (profiles.ROOT / folder).glob('*/*.json'):
@@ -117,7 +117,7 @@ def overview(days=30, kind='all', record_status='', record_target=''):
         day = (first + timedelta(days=i)).isoformat()
         days_data.append({'date': day, 'count': counts[day] if day >= coverage or counts[day] else None})
     distribution = [{'id': key, 'name': label, 'count': sum(row['kind'] == key for row in selected)}
-                    for key, label in [('document', '通用文档解析'), ('service', '服务接口'), ('scene', '场景接口')]]
+                    for key, label in [('document', '文析'), ('service', '服务接口'), ('scene', '场景接口')]]
     # Aggregate all external calls before limiting the detail list. Versions of one
     # target share a rank; a scene and a service with the same ID remain distinct.
     targets = {}

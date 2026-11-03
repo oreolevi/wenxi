@@ -9,7 +9,7 @@ const phases = [
   { id: 'rule', name: '规则执行' },
 ];
 const kinds = [
-  { id: 'document', name: '通用文档解析' },
+  { id: 'document', name: '文析' },
   { id: 'service', name: '服务接口' },
   { id: 'scene', name: '场景接口' },
 ] as const;

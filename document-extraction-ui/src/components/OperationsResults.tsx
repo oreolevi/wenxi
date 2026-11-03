@@ -16,7 +16,7 @@ export function OperationsResults({ quality, kind, unavailable }: { quality?: Op
     ...(quality.unknown ? [{ name: '未记录校验状态', count: quality.unknown, color: '#b8bec9' }] : []),
   ] : [];
   return <div className="platform-two operations-quality">
-    <DashboardCard title="提取结果状态" extra={<Tooltip title="统计所选期间创建、已保存的通用文档解析结果。每个字段只计入一种原始引用状态；人工确认不会改写该状态。服务与场景接口未接入此口径。"><span className="operations-help" tabIndex={0}><InfoCircleOutlined /></span></Tooltip>}>
+    <DashboardCard title="提取结果状态" extra={<Tooltip title="统计所选期间创建、已保存的文析任务结果。每个字段只计入一种原始引用状态；人工确认不会改写该状态。服务与场景接口未接入此口径。"><span className="operations-help" tabIndex={0}><InfoCircleOutlined /></span></Tooltip>}>
       {hasResults && quality ? <><div className="operations-quality-scope">已保存文档结果 · {quality.materials.toLocaleString()} 份材料 · {quality.total.toLocaleString()} 个字段</div><div className="distribution-list">{rows.map(row => <div className="distribution-row" key={row.name}><span>{row.name}</span><Progress percent={row.count / quality.total * 100} strokeColor={row.color} showInfo={false} /><strong>{row.count.toLocaleString()}</strong></div>)}</div></> : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={empty} />}
     </DashboardCard>
     <DashboardCard title="人工核验" extra={<Tooltip title="已确认或已修改字段数 / 已保存通用解析字段数。这里反映核验覆盖率，业务准确率需要另行抽检或标准答案评测。自动接口调用不计入待人工核验。"><span className="operations-help" tabIndex={0}><InfoCircleOutlined /></span></Tooltip>}>

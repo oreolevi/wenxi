@@ -204,7 +204,7 @@ test('Studio 默认我的场景，目录并列、帮助侧栏和标题栏操作�
     await directory('parsers');
     assert.equal(Array.from(container.querySelectorAll('button')).find(button => button.textContent.trim() === '申请公开')?.disabled, true, '草稿先发布版本，才能申请公开');
     assert(!container.querySelector('button button'), '卡片操作保持独立按钮，不嵌套交互元素');
-    await act(async () => { container.querySelector('[aria-label="Studio 帮助"]')?.dispatchEvent(new dom.MouseEvent('click', { bubbles: true })); });
+    await act(async () => { container.querySelector('[aria-label="文析 Studio 帮助"]')?.dispatchEvent(new dom.MouseEvent('click', { bubbles: true })); });
     assert(dom.document.querySelector('.help-center'), '帮助单击即打开完整指南');
     assert.equal(dom.document.querySelector('[role="menu"]'), null, '只有一项帮助时不再经过菜单');
     assert(container.querySelector('.service-project-grid'), '指南在侧栏打开，保留目录上下文');
@@ -214,7 +214,7 @@ test('Studio 默认我的场景，目录并列、帮助侧栏和标题栏操作�
     assert(dom.document.querySelector('.help-code')?.textContent.includes('YOUR_SERVICE_ID'), '接口示例从文档正文呈现');
     await act(async () => { dom.document.querySelector('.help-search-trigger')!.dispatchEvent(new dom.MouseEvent('click', { bubbles: true })); });
     await act(async () => {
-      const input = dom.document.querySelector('[aria-label="搜索使用指南"]')!;
+      const input = dom.document.querySelector('input[aria-label="搜索帮助中心"]')!;
       Object.getOwnPropertyDescriptor(dom.HTMLInputElement.prototype, 'value')!.set!.call(input, '未定位');
       input.dispatchEvent(new dom.Event('input', { bubbles: true }));
     });
@@ -222,9 +222,9 @@ test('Studio 默认我的场景，目录并列、帮助侧栏和标题栏操作�
     const releaseResultIndex = Array.from(dom.document.querySelectorAll('.help-search-results>a')).findIndex(link => link.getAttribute('href')?.includes('doc=testing'));
     assert(releaseResultIndex >= 0, '搜索包含发布条件文档');
     for (let index = 0; index < releaseResultIndex; index++) {
-      await act(async () => { dom.document.querySelector('[aria-label="搜索使用指南"]')!.dispatchEvent(new dom.KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true })); });
+      await act(async () => { dom.document.querySelector('input[aria-label="搜索帮助中心"]')!.dispatchEvent(new dom.KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true })); });
     }
-    await act(async () => { dom.document.querySelector('[aria-label="搜索使用指南"]')!.dispatchEvent(new dom.KeyboardEvent('keydown', { key: 'Enter', bubbles: true })); });
+    await act(async () => { dom.document.querySelector('input[aria-label="搜索帮助中心"]')!.dispatchEvent(new dom.KeyboardEvent('keydown', { key: 'Enter', bubbles: true })); });
     assert.equal(dom.document.querySelector('.help-article h1')?.textContent, '测试与发布', '键盘搜索跳转到对应指南');
     assert.equal(dom.location.href, productAddress, '内嵌阅读不覆盖产品当前地址');
     assert.equal(calls.length, callsBeforeReading, '查阅帮助不调用模型或修改用户记录');

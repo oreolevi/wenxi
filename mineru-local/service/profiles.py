@@ -171,7 +171,7 @@ def read(profile_id):
     with LOCK:
         path = ROOT / 'profiles' / (checked(profile_id) + '.json')
         if not path.is_file():
-            raise FileNotFoundError('提取方案不存在。')
+            raise FileNotFoundError('服务不存在。')
         return json.loads(path.read_text())
 
 
@@ -198,7 +198,7 @@ def save(profile_id, body):
         if draft['resourceKind'] is None:
             draft.pop('resourceKind')
         if draft.get('resourceKind') == 'parser' and draft.get('materialTypes'):
-            raise ValueError('独立解析器不包含多种材料类型，请在场景中组合解析器。')
+            raise ValueError('独立服务不包含多种材料类型，请在场景中组合服务。')
         types = draft.get('materialTypes', [])
         type_ids = {item['id'] for item in types}
         if len(type_ids) != len(types) or len({item['outputKey'] for item in types}) != len(types) or len({item['name'] for item in types}) != len(types):

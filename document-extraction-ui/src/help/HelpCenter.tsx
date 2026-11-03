@@ -58,7 +58,8 @@ export function HelpCenter({ initialDoc = 'welcome', onClose }: Props) {
     return () => { window.removeEventListener('popstate', restore); window.removeEventListener('hashchange', restore); };
   }, [embedded]);
   useEffect(() => {
-    if (!embedded) document.title = `${article?.title || '未找到文章'} · 文析帮助中心`;
+    if (!embedded) document.title = article?.id === 'welcome'
+      ? '文析 · 帮助中心' : `文析 · 帮助中心 · ${article?.title || '未找到文章'}`;
     const frame = requestAnimationFrame(() => {
       const scroller = reading.current; if (!scroller) return;
       const target = current.anchor ? Array.from(body.current?.querySelectorAll<HTMLElement>('[id]') || []).find(node => node.id === current.anchor) : null;
@@ -130,14 +131,14 @@ export function HelpCenter({ initialDoc = 'welcome', onClose }: Props) {
     <a className="help-skip-link" href="#help-content" onClick={event => { event.preventDefault(); body.current?.querySelector<HTMLElement>('h1')?.focus(); }}>跳转到正文</a>
     <header className="help-header"><div className="help-brand"><Button type="text" className="help-mobile-menu" icon={<MenuOutlined />} aria-label="打开章节目录" onClick={() => setMenuOpen(true)} /><a href={helpHref('welcome')} onClick={event => navigate('welcome', '', event)} aria-label="文析帮助首页"><BrandMark /><BrandName /></a><span className="help-brand-divider" /><span>帮助中心</span></div>
       <button className="help-search-trigger" onClick={openSearch} aria-label="搜索帮助中心"><SearchOutlined /><span>搜索文档</span><kbd>⌘ K</kbd></button>
-      {onClose ? <Button className="help-return" type="text" icon={<ArrowLeftOutlined />} onClick={onClose}>返回工作区</Button> : <Button className="help-return" type="text" href="?page=profiles" icon={<ArrowLeftOutlined />}>进入文析</Button>}
+      {onClose ? <Button className="help-return" type="text" icon={<ArrowLeftOutlined />} onClick={onClose}>返回工作区</Button> : <Button className="help-return" type="text" href="?page=profiles" icon={<ArrowLeftOutlined />}>进入文析 Studio</Button>}
     </header>
     <div className="help-layout"><aside className="help-sidebar">{navigation}</aside>
       <div className="help-reading" ref={reading}><div className={`help-reading-inner ${article?.id === 'welcome' ? 'is-welcome' : ''}`}>
         <main className="help-article" ref={body} id="help-content"><div className="help-breadcrumb"><span>{article?.group || '帮助中心'}</span><span>/</span><span>{article?.id === 'welcome' ? '概览' : article?.title || '文章不存在'}</span></div>
           {article ? <><div className="help-article-title"><h1 tabIndex={-1}>{article.title}</h1><Tooltip title="复制文章链接"><Button type="text" icon={<LinkOutlined />} aria-label="复制文章链接" onClick={copyLink} /></Tooltip></div>
             <details className="help-mobile-toc"><summary>本页目录</summary>{toc}</details><div className="help-prose">{article.blocks.map(renderBlock)}</div>
-            <footer className="help-article-footer"><span>文析 · 使用指南</span>{embedded && <a href={helpHref(article.id)} target="_blank" rel="noreferrer"><ExportOutlined /> 在独立页面阅读</a>}</footer>
+            <footer className="help-article-footer"><span>文析 · 帮助中心</span>{embedded && <a href={helpHref(article.id)} target="_blank" rel="noreferrer"><ExportOutlined /> 在独立页面阅读</a>}</footer>
             <nav className="help-page-navigation" aria-label="前后章节">{previous ? internalLink(previous.id, <><small><ArrowLeftOutlined /> 上一篇</small><strong>{previous.title}</strong></>) : <span />}{next ? internalLink(next.id, <><small>下一篇 <ArrowRightOutlined /></small><strong>{next.title}</strong></>) : <span />}</nav>
           </> : <div className="help-not-found"><BookOutlined /><h1 tabIndex={-1}>未找到这篇指南</h1><p>链接可能已变更，请从章节目录或搜索中查找。</p>{internalLink('welcome', '返回帮助首页')}</div>}
         </main>
@@ -146,7 +147,7 @@ export function HelpCenter({ initialDoc = 'welcome', onClose }: Props) {
     </div>
     <Drawer title="章节目录" className="help-menu-drawer" placement="left" size={280} open={menuOpen} onClose={() => setMenuOpen(false)}>{navigation}</Drawer>
     <Modal title="搜索帮助中心" className="help-search-modal" open={searchOpen} onCancel={() => setSearchOpen(false)} footer={null} width={640} destroyOnHidden afterOpenChange={open => { if (open) searchInput.current?.focus(); }}>
-      <Input ref={searchInput} prefix={<SearchOutlined />} size="large" placeholder="搜索，例如：Excel、原文高亮、发布" value={query} aria-label="搜索使用指南" aria-controls="help-search-results" aria-activedescendant={visibleResults.length ? `help-search-result-${selectedResult}` : undefined} onChange={event => { setQuery(event.target.value); setSelectedResult(0); }} onKeyDown={event => {
+      <Input ref={searchInput} prefix={<SearchOutlined />} size="large" placeholder="搜索，例如：Excel、原文高亮、发布" value={query} aria-label="搜索帮助中心" aria-controls="help-search-results" aria-activedescendant={visibleResults.length ? `help-search-result-${selectedResult}` : undefined} onChange={event => { setQuery(event.target.value); setSelectedResult(0); }} onKeyDown={event => {
         if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); setSelectedResult(value => visibleResults.length ? (value + (event.key === 'ArrowDown' ? 1 : visibleResults.length - 1)) % visibleResults.length : 0); }
         if (event.key === 'Enter' && visibleResults[selectedResult]) { event.preventDefault(); const result = visibleResults[selectedResult]; navigate(result.article.id, result.anchor); }
       }} allowClear />

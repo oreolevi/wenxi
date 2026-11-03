@@ -170,14 +170,14 @@ def register_parser(parser_id):
 
 def resolve(draft):
     if not draft['bindings']:
-        raise ValueError('请先添加解析器。')
+        raise ValueError('请先添加服务。')
     result = []
     for binding in draft['bindings']:
         if not binding['version']:
-            raise ValueError(f"请为“{binding['name']}”选择已发布版本。未发布解析器可以先配置，再回到此处选择版本。")
+            raise ValueError(f"请为“{binding['name']}”选择已发布版本。未发布服务可以先配置，再回到此处选择版本。")
         frozen = profiles.published(binding['parserId'], binding['version'])
         if len(frozen.get('materialTypes', [])) > 1:
-            raise ValueError('请使用拆分后的独立解析器。')
+            raise ValueError('请使用拆分后的独立服务。')
         result.append((binding, frozen))
     return result
 
@@ -204,8 +204,8 @@ def candidates(resolved, prepared, assignment=''):
     covered = {p for item in items for p in item['pages']}
     first = next(iter(prepared.values()))
     items = [item for item in items if not set(item['pages']) & ambiguous_pages]
-    for pages, reason in [(sorted(ambiguous_pages), '同一材料匹配多个解析器，请在联调时指定材料用途或调整版式。'),
-                          ([p['number'] for p in first['pages'] if p['number'] not in covered], '未匹配到场景内的解析器。')]:
+    for pages, reason in [(sorted(ambiguous_pages), '同一材料匹配多个服务，请在联调时指定材料用途或调整版式。'),
+                          ([p['number'] for p in first['pages'] if p['number'] not in covered], '未匹配到场景内的服务。')]:
         if pages:
             items.append({'pages': pages, 'fields': [], 'passed': False, 'status': 'needs_review', 'data': None,
                           'sampleId': first.get('id'), 'sourceName': first['name'], 'error': reason})

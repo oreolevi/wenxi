@@ -25,7 +25,7 @@ export const initialSkills: SkillDraft[] = [
 
 export const capabilityComponents = [
   { id: 'orientation', name: '页面自动转正', category: '预处理', engine: 'PP-OCR', state: '已接入',
-    description: '判断四个方向，将横放和倒置的扫描页转正。', input: '扫描 PDF、图片页面', output: '转正预览、方向评分、原图坐标映射', limit: '低文字量或方向不明确时标记待核对；可在提取方案中指定角度。' },
+    description: '判断四个方向，将横放和倒置的扫描页转正。', input: '扫描 PDF、图片页面', output: '转正预览、方向评分、原图坐标映射', limit: '低文字量或方向不明确时标记待核对；可在服务设置中指定角度。' },
   { id: 'deskew', name: '倾斜校正', category: '预处理', engine: 'OpenCV', state: '已接入',
     description: '根据页面长线校正轻微倾斜，保留边缘内容。', input: '已转正的扫描页面', output: '校正图像、倾斜角度、逆变换矩阵', limit: '适用小于 6° 的倾斜；证据不足时跳过，不处理照片透视变形。' },
   { id: 'document-grouping', name: '逐页票据分组', category: '预处理', engine: '文析', state: '已接入',

@@ -78,7 +78,7 @@ class SceneTests(TestCase):
         resolved = scenes.resolve(scene)
         rows = scenes.candidates(resolved, {b['id']: fake_sample() for b, _ in resolved})
         self.assertEqual(len(rows), 1)
-        self.assertIn('多个解析器', rows[0]['error'])
+        self.assertIn('多个服务', rows[0]['error'])
         self.assertFalse(rows[0]['passed'])
         assigned = scenes.candidates(resolved, {'invoices': fake_sample()}, 'invoices')
         self.assertTrue(assigned[0]['passed'])

@@ -54,10 +54,10 @@ def validate(plan, body):
         if parser.reuseParserId:
             existing = profiles.read(parser.reuseParserId)
             if not existing['versions']:
-                raise ValueError('复用建议必须引用已发布解析器。')
+                raise ValueError('复用建议必须引用已发布服务。')
             frozen = profiles.published(parser.reuseParserId, existing['versions'][-1])
             if len(frozen.get('materialTypes', [])) > 1:
-                raise ValueError('请引用独立解析器，而不是旧的多材料场景。')
+                raise ValueError('请引用独立服务，旧的多材料配置需先拆分。')
         if len({f.key for f in parser.fields}) != len(parser.fields):
             raise ValueError('建议包含重复字段名，请重新生成。')
         for layout in parser.layouts:
