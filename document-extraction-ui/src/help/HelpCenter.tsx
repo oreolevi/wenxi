@@ -131,7 +131,7 @@ export function HelpCenter({ initialDoc = 'welcome', onClose }: Props) {
     <a className="help-skip-link" href="#help-content" onClick={event => { event.preventDefault(); body.current?.querySelector<HTMLElement>('h1')?.focus(); }}>跳转到正文</a>
     <header className="help-header"><div className="help-brand"><Button type="text" className="help-mobile-menu" icon={<MenuOutlined />} aria-label="打开章节目录" onClick={() => setMenuOpen(true)} /><a href={helpHref('welcome')} onClick={event => navigate('welcome', '', event)} aria-label="文析帮助首页"><BrandMark /><BrandName /></a><span className="help-brand-divider" /><span>帮助中心</span></div>
       <button className="help-search-trigger" onClick={openSearch} aria-label="搜索帮助中心"><SearchOutlined /><span>搜索文档</span><kbd>⌘ K</kbd></button>
-      {onClose ? <Button className="help-return" type="text" icon={<ArrowLeftOutlined />} onClick={onClose}>返回工作区</Button> : <Button className="help-return" type="text" href="?page=profiles" icon={<ArrowLeftOutlined />}>进入文析</Button>}
+      {onClose ? <Button className="help-return" type="text" icon={<ArrowLeftOutlined />} onClick={onClose}>返回工作区</Button> : <Button className="help-return" type="text" href="?page=profiles" icon={<ArrowLeftOutlined />}>进入文析 Studio</Button>}
     </header>
     <div className="help-layout"><aside className="help-sidebar">{navigation}</aside>
       <div className="help-reading" ref={reading}><div className={`help-reading-inner ${article?.id === 'welcome' ? 'is-welcome' : ''}`}>
