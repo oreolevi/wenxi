@@ -58,7 +58,10 @@ export default function App() {
     window.addEventListener('popstate', restore);
     return () => window.removeEventListener('popstate', restore);
   }, []);
-  useEffect(() => { document.title = `文析 · ${pageTitle(page)}`; }, [page]);
+  useEffect(() => {
+    const title = pageTitle(page);
+    document.title = page === 'business' || page === 'profiles' ? title : `文析 · ${title}`;
+  }, [page]);
   const [panel, setPanel] = useState<'examples' | 'help' | 'export' | 'comparison' | null>(() => localServicePage() && new URLSearchParams(location.search).get('view') === 'comparison' ? 'comparison' : null);
   const [conversationOpen, setConversationOpen] = useState(false);
   const [workspaceDismissed, setWorkspaceDismissed] = useState(false);
