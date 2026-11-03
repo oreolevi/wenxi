@@ -9,7 +9,7 @@ import type { SceneSummary } from '../studio.ts';
 export type StudioHomeView = 'mine' | 'parsers' | 'library';
 
 export function StudioHelp({ disabled, onGuide }: { disabled?: boolean; onGuide: () => void }) {
-  return <Button type="text" className="studio-help" aria-label="Studio 帮助" disabled={disabled} icon={<QuestionCircleOutlined />} onClick={onGuide}>帮助</Button>;
+  return <Button type="text" className="studio-help" aria-label="文析 Studio 帮助" disabled={disabled} icon={<QuestionCircleOutlined />} onClick={onGuide}>帮助</Button>;
 }
 
 export function StudioHome({ view, records, scenes, createKey, onScene, onSceneNew, onChanged, onReference, library, libraryError, reviews, busy, query, filter, onQuery, onFilter, onView, onNew, onOpen, onReuse, onCopy, onShare, onReview }: {

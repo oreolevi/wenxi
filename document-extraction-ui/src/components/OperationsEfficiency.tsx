@@ -15,6 +15,6 @@ export function OperationsEfficiency({ open, onClose, value, source }: {
       { title: '预估节约', dataIndex: 'savedMinutes', render: (minutes, row) => row.configuredCalls ? `${savedHours(minutes)} 小时` : '—' },
       { title: '未配置', dataIndex: 'unconfiguredCalls', render: count => `${count} 次` },
     ]} /> : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无可折算的场景调用" />}
-    <p className="operations-card-note">在“我的场景 → 设置”中填写单次预计节约时长。保存后用于新调用，历史记录保留原基准；文档解析和独立服务调用暂不折算。</p>
+    <p className="operations-card-note">在“我的场景 → 设置”中填写单次预计节约时长。保存后用于新调用，历史记录保留原基准；文析任务和独立服务调用暂不折算。</p>
   </Drawer>;
 }

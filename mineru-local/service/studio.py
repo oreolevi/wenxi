@@ -35,7 +35,7 @@ def evaluate(profile_id, sample_ids):
     for template in draft['templates']:
         links.setdefault(template['sampleId'], {'sampleId': template['sampleId'], 'templateId': template['id'], 'role': 'calibration'})
     if any(sample_id not in links for sample_id in sample_ids):
-        raise ValueError('请先把测试材料添加到当前解析器。')
+        raise ValueError('请先把测试材料添加到当前服务。')
     started, created, digest = time.perf_counter(), profiles.now(), profiles.fingerprint(draft)
     rows = []
     for sample_id in sample_ids:

@@ -27,7 +27,7 @@ export const helpArticles: HelpArticle[] = [
   article('quickstart', 'studio/quickstart.md', '文析 Studio', '需求准备、服务开发、场景联调与接口接入。', quickstart),
   article('requirements', 'studio/requirements.md', '文析 Studio', '字段定义、版式样例与验收要求。', requirements),
   article('services', 'studio/services.md', '文析 Studio', '版式管理、规则生成与字段校准。', services),
-  article('testing', 'studio/testing.md', '文析 Studio', '单份测试、批量回放与固定版本发布。', testing),
+  article('testing', 'studio/testing.md', '文析 Studio', '单份调试、批量测试与固定版本发布。', testing),
   article('scenes', 'studio/scenes.md', '文析 Studio', '服务引用、材料约束与整包联调。', scenes),
   article('api', 'studio/api.md', '文析 Studio', '接口调用、异常处理与版本维护。', api),
   article('faq', 'studio/faq.md', '参考', '配置、发布与运行问题。', faq),

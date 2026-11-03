@@ -8,7 +8,7 @@ export function PreprocessingSettings({ draft, sample, busy, onChange, onReproce
 }) {
   const policy = draft.preprocessing || defaultPreprocessing;
   return <div className="preprocessing-settings">
-    <div className="preprocessing-heading"><strong>公共处理流程</strong><Tag color="blue">无大模型</Tag></div>
+    <div className="preprocessing-heading"><strong>预处理流程</strong><Tag color="blue">无大模型</Tag></div>
     <div className="preprocessing-step"><span className="preprocessing-step-number">1</span><div><strong>文字层检测</strong><p>可读 PDF 直接取字，扫描件使用 OCR。</p></div><CheckCircleOutlined /></div>
     <label>页面转正<Select aria-label="页面转正策略" disabled={busy} value={policy.orientation} onChange={orientation => onChange({ ...draft, preprocessing: { ...policy, orientation } })}
       options={[{ value: 'auto', label: '自动判断方向' }, { value: 'off', label: '保持上传方向' }, { value: '90', label: '逆时针旋转 90°' }, { value: '180', label: '旋转 180°' }, { value: '270', label: '顺时针旋转 90°' }]} /></label>
