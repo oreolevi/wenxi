@@ -440,7 +440,12 @@ async def local_access(request: Request, call_next):
                                 headers={'WWW-Authenticate': 'Basic realm="Wenxi", charset="UTF-8"'})
     if request.headers.get('origin') and request.headers['origin'] not in ORIGINS:
         return JSONResponse({'detail': '请通过文析本机试用地址访问。'}, status_code=403)
-    if request.headers.get('sec-fetch-site') == 'cross-site':
+    # Shared links navigate to the UI from another site; API requests still
+    # require a same-origin context, even when the browser has saved credentials.
+    public_navigation = (bool(PUBLIC_ORIGIN) and request.method == 'GET' and request.url.path == '/'
+                         and request.headers.get('sec-fetch-mode') == 'navigate'
+                         and request.headers.get('sec-fetch-dest') == 'document')
+    if request.headers.get('sec-fetch-site') == 'cross-site' and not public_navigation:
         return JSONResponse({'detail': '仅允许本机页面访问。'}, status_code=403)
     from urllib.parse import urlsplit
     hosts = {'127.0.0.1', 'localhost'} | ({urlsplit(PUBLIC_ORIGIN).hostname} if PUBLIC_ORIGIN else set())

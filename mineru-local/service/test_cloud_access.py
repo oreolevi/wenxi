@@ -1,4 +1,6 @@
 import base64
+from pathlib import Path
+import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -8,6 +10,34 @@ from . import app as service
 
 
 class CloudAccessTests(unittest.IsolatedAsyncioTestCase):
+    async def test_shared_public_links_allow_navigation_but_not_cross_site_api_requests(self):
+        env = {'WENXI_RECOGNITION_BACKEND': 'mineru-cloud', 'WENXI_ACCESS_USER': 'wenxi',
+               'WENXI_ACCESS_PASSWORD': 'test-access-only'}
+        navigation = {'sec-fetch-site': 'cross-site', 'sec-fetch-mode': 'navigate',
+                      'sec-fetch-dest': 'document', 'sec-fetch-user': '?1'}
+        with tempfile.TemporaryDirectory() as directory:
+            ui = Path(directory) / 'index.html'
+            ui.write_text('<!doctype html><title>Wenxi</title>', encoding='utf-8')
+            with patch.dict('os.environ', env), patch.object(service, 'PUBLIC_ORIGIN', 'https://wenxi.example'), patch.object(service, 'UI', ui):
+                async with httpx.AsyncClient(transport=httpx.ASGITransport(app=service.app), base_url='https://wenxi.example') as client:
+                    self.assertEqual((await client.get('/', headers=navigation)).status_code, 401)
+                    client.auth = ('wenxi', 'test-access-only')
+                    for path in ['/', '/?page=profiles', '/?page=history']:
+                        response = await client.get(path, headers=navigation)
+                        self.assertEqual(response.status_code, 200)
+                        self.assertIn('<title>Wenxi</title>', response.text)
+                    self.assertEqual((await client.get('/api/health', headers=navigation)).status_code, 403)
+                    self.assertEqual((await client.post('/api/tasks', headers=navigation)).status_code, 403)
+                    self.assertEqual((await client.post('/', headers=navigation)).status_code, 403)
+                    self.assertEqual((await client.get('/', headers={**navigation, 'sec-fetch-mode': 'cors'})).status_code, 403)
+                    self.assertEqual((await client.get('/', headers={**navigation, 'sec-fetch-dest': 'iframe'})).status_code, 403)
+                    self.assertEqual((await client.get('/', headers={**navigation, 'origin': 'https://evil.example'})).status_code, 403)
+                    self.assertEqual((await client.get('/', headers={**navigation, 'host': 'evil.example'})).status_code, 403)
+                    self.assertEqual((await client.get('/api/health', headers={'sec-fetch-site': 'same-origin'})).status_code, 200)
+                with patch.object(service, 'PUBLIC_ORIGIN', ''):
+                    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=service.app), base_url='http://localhost', auth=('wenxi', 'test-access-only')) as client:
+                        self.assertEqual((await client.get('/', headers=navigation)).status_code, 403)
+
     async def test_live_routes_require_account_and_same_origin(self):
         env = {'WENXI_RECOGNITION_BACKEND': 'mineru-cloud', 'WENXI_ACCESS_USER': 'wenxi',
                'WENXI_ACCESS_PASSWORD': 'test-access-only'}
