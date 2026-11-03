@@ -1,0 +1,17 @@
+# Application dependencies. requirements.lock.txt records the original Mac environment.
+# MinerU basic models are prepared separately and are not included in the repository.
+mineru==4.1.0
+fastapi==0.162.0
+uvicorn==0.54.0
+python-multipart==0.0.32
+openpyxl==3.1.5
+filelock==4.2.4
+pypdfium2==5.14.0
+beautifulsoup4==4.15.0
+opencv-python-headless==5.0.0.93
+numpy==2.4.6
+pillow==12.3.0
+# Tests and fictional PDF generation.
+httpx==0.28.1
+reportlab==5.1.0
+pypdf==6.21.4

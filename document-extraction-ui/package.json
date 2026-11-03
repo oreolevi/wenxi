@@ -1,0 +1,37 @@
+{
+  "name": "document-extraction-ui",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build && node scripts/export-html.mjs",
+    "build:demo": "tsc --noEmit && vite build --mode demo --outDir dist-demo && node scripts/export-html.mjs --demo",
+    "build:live": "tsc --noEmit && vite build --mode live --outDir dist-live && node scripts/export-html.mjs --live",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "node --test tests/*.test.ts"
+  },
+  "dependencies": {
+    "@ant-design/icons": "^6.0.0",
+    "@ant-design/x": "2.9.0",
+    "antd": "6.6.8",
+    "border-beam": "1.0.1",
+    "gsap": "3.15.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "react-markdown": "^10.1.0",
+    "rehype-raw": "^7.0.0",
+    "rehype-sanitize": "^6.0.0",
+    "remark-gfm": "^4.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^5.1.1",
+    "happy-dom": "^21.0.4",
+    "typescript": "~5.9.3",
+    "vite": "^7.3.1",
+    "vite-plugin-singlefile": "2.3.4"
+  }
+}

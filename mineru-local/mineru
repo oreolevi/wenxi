@@ -1,0 +1,17 @@
+#!/bin/sh
+set -eu
+
+project_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+export MINERU_HOME="$project_root/.runtime/mineru-data"
+export HF_HOME="$MINERU_HOME/cache/huggingface"
+export MODELSCOPE_CACHE="$MINERU_HOME/cache/modelscope"
+export GRADIO_ANALYTICS_ENABLED=false
+export NO_PROXY="${NO_PROXY:+$NO_PROXY,}localhost,127.0.0.1,::1"
+export no_proxy="$NO_PROXY"
+# Parsing stays offline unless a source is explicitly selected for a download.
+export MINERU_MODEL_SOURCE="${MINERU_MODEL_SOURCE:-local}"
+if [ -f /etc/ssl/cert.pem ]; then
+  export SSL_CERT_FILE="${SSL_CERT_FILE:-/etc/ssl/cert.pem}"
+  export REQUESTS_CA_BUNDLE="${REQUESTS_CA_BUNDLE:-/etc/ssl/cert.pem}"
+fi
+exec "$project_root/.runtime/mineru-venv/bin/mineru-kit" "$@"

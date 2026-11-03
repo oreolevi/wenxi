@@ -1,0 +1,17 @@
+/* Shared semantic icon treatment for capabilities and Studio objects. */
+.product-icon {
+  display:inline-flex; align-items:center; justify-content:center; flex:none;
+  color:inherit; font-size:20px; line-height:1; vertical-align:-.125em;
+}
+.product-icon > .anticon, .product-icon > svg { display:block; font-size:inherit; width:1em; height:1em; }
+.product-icon.product-icon-framed {
+  width:36px; height:36px; flex:0 0 36px; border-radius:9px;
+  color:var(--accent); background:color-mix(in srgb,var(--accent) 5%,var(--surface));
+  border:1px solid color-mix(in srgb,var(--accent) 12%,var(--line));
+  box-shadow:none;
+}
+.product-icon.product-icon-small { font-size:16px; }
+.product-icon.product-icon-framed.product-icon-small { width:32px; height:32px; flex-basis:32px; border-radius:8px; font-size:18px; }
+.studio-template-item > .product-icon { margin-top:2px; color:var(--text-muted); }
+.studio-template-item.is-active > .product-icon { color:var(--accent); }
+.studio-template-list > button > .product-icon { color:var(--accent); }

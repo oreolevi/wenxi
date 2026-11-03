@@ -1,0 +1,8 @@
+* text=auto eol=lf
+*.pdf -text
+*.woff2 -text
+*.png -text
+*.jpg -text
+*.jpeg -text
+*.gif -text
+*.webp -text

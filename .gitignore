@@ -1,0 +1,42 @@
+# Local data, uploads, model weights and generated reports never belong in Git.
+.runtime/
+output/
+tmp/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+node_modules/
+dist/
+*.log
+*.pid
+*.sqlite*
+*.db
+*.onnx
+*.gguf
+*.safetensors
+*.pt
+*.pth
+*.zip
+*.xlsx
+*.xls
+*.csv
+*.pdf
+*.docx
+# Only these two generated, fictional regression fixtures are versioned.
+!mineru-local/testdata/fictional-application-text.pdf
+!mineru-local/testdata/fictional-application-scan.pdf
+/*.html
+# Keep credentials local; commit only blank examples.
+.env
+.env.*
+!.env.example
+.DS_Store
+# Private certificates and authentication exports.
+*.pem
+*.key
+*.p12
+*.pfx
+*.kdbx
+.ssh/

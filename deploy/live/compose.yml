@@ -1,0 +1,28 @@
+name: wenxi-live
+services:
+  wenxi-live-web:
+    image: wenxi-live:${APP_RELEASE:?set APP_RELEASE}
+    container_name: wenxi-live-web
+    restart: unless-stopped
+    env_file: /opt/wenxi-live/app/.env.production
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
+    cpus: 1.0
+    pids_limit: 128
+    tmpfs: ["/tmp:size=67108864,mode=1777"]
+    volumes:
+      - /opt/wenxi-live/data:/app/.runtime
+    expose: ["8080"]
+    networks: [proxy]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/healthz',timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+networks:
+  proxy:
+    external: true
+    name: app_default

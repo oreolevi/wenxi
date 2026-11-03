@@ -1,0 +1,14 @@
+# Hosted OCR; only a small CPU orientation classifier runs on this server.
+fastapi==0.162.0
+uvicorn==0.54.0
+python-multipart==0.0.32
+openpyxl==3.1.5
+filelock==4.2.4
+pypdfium2==5.14.0
+beautifulsoup4==4.15.0
+opencv-python-headless==5.0.0.93
+numpy==2.4.6
+pillow==12.3.0
+httpx==0.28.1
+pypdf==6.21.4
+onnxruntime==1.31.1
