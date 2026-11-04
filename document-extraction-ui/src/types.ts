@@ -25,6 +25,8 @@ export interface SourceEvidence {
   originalPageIndex?: number;
   originalBBox?: [number, number, number, number];
   originalPolygon?: number[][];
+  sealRecognition?: { status: string; engine: string; confidence?: number;
+    lines?: Array<{ text: string; confidence: number; polygon: number[][] }> };
 }
 
 export interface PreprocessingPolicy {
@@ -60,6 +62,7 @@ export interface ParsedDocument {
   requirements?: RequirementDefinition | null;
   pages: DocumentPage[];
   preprocessing?: PreprocessingReport;
+  sealRecognition?: { engine: string; regions: number; recognized: number; elapsedMs: number };
   units?: Array<{ id: string; label: string; pages: number[]; needsReview: boolean }>;
 }
 

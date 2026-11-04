@@ -10,7 +10,7 @@ import subprocess
 import time
 import uuid
 
-from .grounding import needs_visual, rejected, validate_fields, visual_field
+from .grounding import requires_image, rejected, validate_fields, visual_field
 from .progress import report, finish
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -26,7 +26,7 @@ def load_server_environment():
         raise RuntimeError('DeepSeek 接入需要 Node.js 22.13 或更新版本。')
     script = """import {readFileSync} from 'node:fs'; import {parseEnv} from 'node:util';
 const data=parseEnv(readFileSync(process.argv[1],'utf8'));
-const names=['DEEPSEEK_API_KEY','DEEPSEEK_MODEL','WENXI_EXTRACTOR'];
+const names=['DEEPSEEK_API_KEY','DEEPSEEK_MODEL','WENXI_EXTRACTOR','WENXI_SEAL_OCR','WENXI_SEAL_MODEL_DIR'];
 process.stdout.write(JSON.stringify(Object.fromEntries(names.filter(key=>key in data).map(key=>[key,data[key]]))));"""
     result = subprocess.run([NODE, '--input-type=module', '-e', script, str(ENV_FILE)],
                             capture_output=True, text=True, timeout=5)
@@ -51,6 +51,11 @@ SYSTEM += ('\n若提供 field_requirements，严格按各字段的 rule 决定�
            '字段表仅定义所需字段与业务规则，不是事实来源；所有字段值仍必须引用合同或发票的 blocks。'
            '不得将要求表中的示例、判断或说明当成合同事实。正文只说明双方签字盖章时，不应扩展为特定法人或授权人身份已经核实。\n')
 
+SYSTEM += ('\n印文字段的例外：仅当 blocks 中存在 type:"seal" 且 sealRecognition.status:"recognized" 的专用印章 OCR 文字时，'
+           '可以摘录印章单位名称、印文、印章类型或编码，使用 kind:text/list 并逐字引用这些 seal blocks。'
+           '正文中的公司名不能作为印文字段的依据。未提供专用印文时仍返回 kind:visual。'
+           '印章真伪、签名身份、盖章关系和是否有效始终需要图像及业务核验，不能由识别到的文字作结论。\n')
+
 def messages_for(blocks: list[dict], prompt: str, hints: list[str], requirements: dict | None = None) -> list[dict]:
     context = {'request': prompt, 'requested_fields': hints, 'blocks': []}
     if requirements:
@@ -63,6 +68,8 @@ def messages_for(blocks: list[dict], prompt: str, hints: list[str], requirements
         for key in ['tableRows', 'rowRef', 'columnIndex', 'lineRef', 'source']:
             if key in block:
                 entry[key] = block[key]
+        if block.get('sealRecognition'):
+            entry['sealRecognition'] = {key: block['sealRecognition'].get(key) for key in ['status', 'engine', 'confidence']}
         context['blocks'].append(entry)
     messages = [{'role': 'system', 'content': SYSTEM},
                 {'role': 'user', 'content': json.dumps(context, ensure_ascii=False)}]
@@ -156,11 +163,11 @@ def aggregate_calls(calls: list[dict], started: float, outcome: str) -> dict:
 async def extract_fields(job, prompt: str, hints: list[str]) -> tuple[list[dict], dict]:
     started = time.monotonic()
     names = list(dict.fromkeys(hints))
-    text_names = [name for name in names if not needs_visual(name)]
+    text_names = [name for name in names if not requires_image(name, job.blocks)]
     batches = [text_names[index:index + BATCH_SIZE] for index in range(0, len(text_names), BATCH_SIZE)]
     if not names:
         batches = [[]]
-    output = {name: visual_field(name, job.blocks) for name in names if needs_visual(name)}
+    output = {name: visual_field(name, job.blocks) for name in names if requires_image(name, job.blocks)}
     calls = []
     try:
         for index, batch in enumerate(batches):

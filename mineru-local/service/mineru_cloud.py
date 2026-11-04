@@ -149,6 +149,13 @@ def normalize_layout(layout):
         output = []
 
         def visit(block):
+            if block.get('sub_type') == 'seal' or block.get('type') == 'seal':
+                box = _box(block.get('bbox'), width, height)
+                if box:
+                    # Keep the region even when hosted OCR provides no imprint text.
+                    output.append({'index': len(output), 'type': 'image', 'sub_type': 'seal',
+                                   'bbox': box, 'content': _text(block)})
+                return
             # Image/table containers can hold body blocks and captions.
             if block.get('blocks'):
                 for child in block['blocks']:

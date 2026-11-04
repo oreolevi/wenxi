@@ -59,7 +59,23 @@ def source_quote(source: str, quote: str) -> str | None:
 
 def needs_visual(name: str) -> bool:
     # Clause requirements are text questions; actual marks/signatures/locations need images.
-    return not re.search(r'条件|要求|条款|生效', name) and bool(re.search(r'签章|印章|名章|签名|手写|签字', name))
+    return not re.search(r'条件|要求|条款|生效', name) and bool(re.search(r'签章|印章|名章|印文|盖章|公章|合同章|财务章|印鉴|签名|手写|签字', name))
+
+
+def seal_text_question(name: str) -> bool:
+    if re.search(r'条件|要求|条款|生效|是否|有无|真伪|真实|有效|位置|骑缝|签名|签字|手写|一致|比对|清晰|数量|盖章人|签章人|法人|授权人', name):
+        return False
+    return bool(re.search(r'印章|签章|盖章|名章|印文|公章|合同章|财务章|印鉴', name) and re.search(r'名称|单位|内容|文字|印文|编码|编号|号码|类型|类别', name))
+
+
+def recognized_seals(blocks: list[dict]) -> list[dict]:
+    return [block for block in blocks if block.get('blockType') == 'seal' and block.get('text')
+            and block.get('sealRecognition', {}).get('status') == 'recognized'
+            and block.get('sealRecognition', {}).get('engine') == 'MinerU / PP-OCR seal / ONNX CPU']
+
+
+def requires_image(name: str, blocks: list[dict]) -> bool:
+    return needs_visual(name) and not (seal_text_question(name) and recognized_seals(blocks))
 
 
 def base_field(name: str) -> dict:
@@ -126,21 +142,33 @@ def visual_field(name: str, blocks: list[dict]) -> dict:
     if contexts:
         output.update(ref=contexts[0]['ref'], page=contexts[0]['pageIndex'] + 1, evidence=contexts)
     output.update(kind='visual', status='visual_required', validationStatus='visual_required',
-                  note='当前文字链路不能核验实际印章、签名或盖章位置。相关区域仅供人工查看，不以正文公司名代替印文。')
+                  note='请对照原图核验。印章文字识别不证明印章真伪、签名身份或盖章关系；未读出的印文不以正文单位名代替。')
     return output
 
 
 def check_field(data: dict, name: str, blocks: list[dict]) -> dict:
-    if needs_visual(name):
+    if requires_image(name, blocks):
         return visual_field(name, blocks)
+    seal_question = seal_text_question(name)
+    incomplete_seals = seal_question and any(block.get('blockType') == 'seal' and block not in recognized_seals(blocks) for block in blocks)
+    if seal_question:
+        # A correctly quoted company name in the body is still not an imprint.
+        blocks = recognized_seals(blocks)
+    else:
+        # Imprint text alone does not establish the role of a body-text party.
+        blocks = [block for block in blocks if block.get('blockType') != 'seal']
     try:
         item = SemanticField.model_validate(data)
     except ValueError:
         return rejected(name, '字段返回结构不符合要求，其他字段继续保留。', 'schema')
     if item.kind == 'visual':
         return visual_field(name, blocks)
+    if seal_question and item.kind not in {'text', 'list'}:
+        return rejected(name, '印文字段仅支持摘录印章 OCR 文字，不能推断核验结论。', 'seal_source')
     output = base_field(name)
     output.update(kind=item.kind, note=item.note)
+    if seal_question:
+        output['note'] = '来自印章区域的 OCR 文字，需对照原图核验；不代表印章真伪或签章效力。'
     source = {block['ref']: block for block in blocks}
     facts, row_issues = [], []
     if item.kind == 'text':
@@ -194,6 +222,9 @@ def check_field(data: dict, name: str, blocks: list[dict]) -> dict:
             output['issues'].append({'path': f'{name}[{index + 1}]', 'code': 'evidence', 'message': fact['issue']})
     output['issues'].extend({'path': name, 'code': 'row_association', 'message': message} for message in row_issues)
     attach_evidence(output, facts)
+    if incomplete_seals:
+        output['issues'].append({'path': name, 'code': 'seal_incomplete',
+            'message': '另有印章区域尚未可靠识别，已读出的印文保留，请核对全部印章。'})
     for block in output['evidence']:
         if block.get('source') == 'mineru' and re.search(r'(?:结算|审核|合同|当批)金额的\s*\d{1,2}(?:\.\d+)?\s*$', block['text']):
             message = '原文 OCR 在金额比例处截断，请对照页面核对完整条款。'
@@ -226,7 +257,7 @@ def validate_fields(data: dict, blocks: list[dict], expected_names: list[str] | 
         by_name.setdefault(name, []).append(item)
     output = []
     for name in requested or list(by_name):
-        if needs_visual(name):
+        if requires_image(name, blocks):
             output.append(visual_field(name, blocks))
         elif name not in by_name:
             output.append(rejected(name, '模型未返回此字段，请调整要求或单独重试。', 'omitted'))

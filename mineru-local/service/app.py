@@ -27,7 +27,7 @@ import pypdfium2 as pdfium
 from .extraction import read_blocks, match_fields
 from .source_text import prefer_pdf_text
 from .requirements import MAX_WORKBOOK_BYTES, RequirementDefinition, parse_workbook
-from . import semantic, activity, history, profiles, preprocessing, studio, rule_generation, rule_assistant, bundles, routing, scenes, studio_planning, operations, full_text, mineru_cloud
+from . import semantic, activity, history, profiles, preprocessing, studio, rule_generation, rule_assistant, bundles, routing, scenes, studio_planning, operations, full_text, mineru_cloud, seals
 from .progress import report, finish
 
 logger = logging.getLogger('uvicorn.error')
@@ -328,6 +328,8 @@ async def run_job(job: Job, reuse: bool = False):
                     await recognize_document(job)
             else:
                 report(job, 'reuse', '复用已识别原文', 'done')
+            if not job.ocr_only and job.output_mode != 'fulltext':
+                await seals.enrich(job)
             if job.output_mode == 'fulltext':
                 fields = []
                 report(job, 'fulltext', '已生成全文与 Markdown', 'done')

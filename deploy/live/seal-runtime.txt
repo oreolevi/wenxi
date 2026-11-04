@@ -1,0 +1,4 @@
+# Install with --no-deps after requirements.txt. Do not install full OCR/LLM extras.
+# Only the existing MinerU dedicated ONNX seal OCR path is imported.
+mineru==4.1.0
+docvortex==0.6.8
