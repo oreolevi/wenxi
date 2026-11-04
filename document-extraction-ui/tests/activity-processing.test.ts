@@ -57,7 +57,7 @@ test('能力分布按轮次和材料计数，同一材料的多批提取与轮�
     event('file1:validate-0'), event('file1:validate-1'), event('file2:extract-0'), event('local'),
   ] };
   const counts = Object.fromEntries(capabilityUsage([trace, trace]).map(item => [item.id, item.count]));
-  assert.deepEqual(counts, { recognize: 1, semantic: 2, grounding: 1, preview: 1, match: 0 });
+  assert.deepEqual(counts, { recognize: 1, semantic: 2, grounding: 1, preview: 1, match: 0, seal: 0, 'region-ocr': 0 });
   const repeated = capabilityUsage([trace, { ...trace, id: 'turn2', steps: [event('file1:extract-0')] }]);
   assert.equal(repeated.find(item => item.id === 'semantic')?.count, 3);
   assert(capabilityUsage([]).every(item => item.count === 0));
@@ -72,4 +72,24 @@ test('能力尝试与业务成功分开统计，停止前已开始的能力仍�
   const usage = capabilityUsage([trace]);
   assert.equal(usage.find(item => item.id === 'semantic')?.count, 1);
   assert.equal(usage.find(item => item.id === 'grounding')?.count, 0);
+});
+
+test('印章OCR按每份材料和轮次计一次，失败尝试也保留记录', () => {
+  const step = { id: 'file1:seal-ocr', label: '印文识别', status: 'error' as const, startedAt: '2026-11-04T00:00:00Z' };
+  const trace = { id: 'seal-turn', startedAt: step.startedAt, status: 'done' as const, steps: [step, step] };
+  assert.equal(capabilityUsage([trace, trace]).find(item => item.id === 'seal')?.count, 1);
+  assert.equal(capabilityUsage([{ ...trace, steps: [step, { ...step, id: 'file2:seal-ocr' }] }]).find(item => item.id === 'seal')?.count, 2);
+});
+
+test('跳过和决策不算能力调用，补识别计入对应能力且不重复计语义批次', () => {
+  const event = (id: string): ProcessingStep => ({ id, label: id, status: 'done', startedAt: '2026-11-04T00:00:00Z' });
+  const trace: ProcessingTrace = { id: 'bounded', startedAt: '2026-11-04T00:00:00Z', status: 'done', steps: [
+    event('file1:seal-plan'), event('file1:extract-0'), event('file1:validate-0'), event('file1:supplement-plan'),
+    event('file1:region-ocr'), event('file1:supplement-extract-0'), event('file1:supplement-validate-0'),
+  ] };
+  const counts = Object.fromEntries(capabilityUsage([trace]).map(item => [item.id, item.count]));
+  assert.equal(counts.seal, 0);
+  assert.equal(counts['region-ocr'], 1);
+  assert.equal(counts.semantic, 1);
+  assert.equal(counts.grounding, 1);
 });

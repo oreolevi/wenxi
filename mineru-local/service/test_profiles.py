@@ -163,10 +163,12 @@ class ProfileRuntimeTests(IsolatedAsyncioTestCase):
                 return True
             with patch.object(app, 'recognize_text_pdf', recognize), patch.object(app.semantic, 'enabled', return_value=True), \
                     patch.object(app.semantic, 'extract_fields', new_callable=AsyncMock) as semantic, \
+                    patch.object(app.seals, 'enrich', new_callable=AsyncMock) as seal_ocr, \
                     patch.object(app.activity, 'start'), patch.object(app.activity, 'complete'):
                 await app.run_job(job)
                 self.assertEqual(job.status, 'succeeded')
                 semantic.assert_not_called()
+                seal_ocr.assert_not_called()
                 self.assertEqual(job.document['extractor'], 'label-match')
 
     async def test_profile_api_persists_tests_and_published_versions(self):

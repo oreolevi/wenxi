@@ -1,8 +1,10 @@
 # 文析云端接入
 
-网页与业务后端运行在轻量服务器；文档识别调用 MinerU 官方托管 API，语义提取与配置助手调用 DeepSeek。服务器不运行 OCR 或大模型权重。
+网页与业务后端运行在轻量服务器；文档识别调用 MinerU 官方托管 API，语义提取与配置助手调用 DeepSeek。服务器使用轻量 CPU 模型进行页面方向判断及印章区域的专用 OCR，不运行整份文档 OCR 或大模型。
 
 页面预处理与本机共用转正、倾斜校正及坐标映射流程。云端使用固定版本的约 6.8 MB 页面方向分类模型，CPU 单线程运行；保存上传原图与处理后页面，将校正后的 PDF 交给 MinerU。方向判断不确定时保持原图并标记待核对，固定版式提取会阻止使用不确定的页面。
+
+文析字段提取时，已定位的印章区域可调用同一 MinerU 引擎的专用 CPU OCR，三份权重共约 27.7 MB，包含局部正文补识别的轻量检测模型；无需新增云端识别账户。工作进程单线程、限制区域数量与时长，完成后释放。模型准备、依赖边界、哈希及验证记录见 [印章文字识别接入](../../docs/development/seal-recognition.md)。专项 OCR 按需求启用，缺失字段最多补识别一轮、两个区域和六个字段，基础解析不变。共享服务器发布前须单独验证容量；`WENXI_SEAL_OCR=off` 可保留区域而关闭专用印文识别，普通局部文字补识别仍可使用。
 
 固定规则保留原有发布版本。校正新增留白时，依据至少三个静态标题或字段标签校准区域；位置无法可靠对应时返回待核对，不猜测取值。云端 OCR 优先使用实际文字区域的坐标，避免用段落或整行边框代替字段位置。
 
@@ -36,16 +38,22 @@
 ```text
 Dockerfile                  ← deploy/live/Dockerfile
 requirements.txt            ← deploy/live/requirements.txt
+seal-runtime.txt            ← deploy/live/seal-runtime.txt（仅 --no-deps 安装）
 public/index.html           ← document-extraction-ui/dist-live/index.html
 mineru-local/service/*.py    ← 排除 test_* 与 smoke_*
 mineru-local/deepseek/deepseek-client.mjs
 mineru-local/deepseek/extract-worker.mjs
 models/document-orientation.onnx  ← 经哈希校验的方向模型，见 models/README.md
+models/seal/seal_PP-OCRv4_det_infer.onnx  ← 经哈希校验的专用印章文字检测模型
+models/seal/ch_PP-OCRv6_tiny_det_infer.onnx ← 经哈希校验的局部正文检测模型
+models/seal/ch_PP-OCRv6_small_rec_infer.onnx ← 经哈希校验的共享文字识别模型
 models/README.md
 models/LICENSE
 ```
 
 不得复制本机 `.runtime`、`.env.local`、真实业务样本或历史记录。只将上述上下文传到服务器的独立发布目录。
+
+三份区域 OCR 权重在构建前运行 `prepare-seal-models.py` 下载并校验，按上表复制指定文件；不要复制完整本机模型目录。`seal-runtime.txt` 的两个包使用 `--no-deps` 安装，轻量依赖在 `requirements.txt` 中明确列出，避免引入完整解析器和 VLM 运行栈。Dockerfile 在构建阶段生成紧凑识别图；保留这一步，以降低首笔印文识别时的内存压力。
 
 ```sh
 docker build -t wenxi-live:RELEASE BUILD_CONTEXT

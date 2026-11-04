@@ -27,7 +27,7 @@ import pypdfium2 as pdfium
 from .extraction import read_blocks, match_fields
 from .source_text import prefer_pdf_text
 from .requirements import MAX_WORKBOOK_BYTES, RequirementDefinition, parse_workbook
-from . import semantic, activity, history, profiles, preprocessing, studio, rule_generation, rule_assistant, bundles, routing, scenes, studio_planning, operations, full_text, mineru_cloud
+from . import semantic, activity, history, profiles, preprocessing, studio, rule_generation, rule_assistant, bundles, routing, scenes, studio_planning, operations, full_text, mineru_cloud, seals, extraction_flow
 from .progress import report, finish
 
 logger = logging.getLogger('uvicorn.error')
@@ -328,11 +328,13 @@ async def run_job(job: Job, reuse: bool = False):
                     await recognize_document(job)
             else:
                 report(job, 'reuse', '复用已识别原文', 'done')
+            if job.output_mode == 'fulltext' or job.ocr_only or not semantic.enabled():
+                job.document = {key: value for key, value in job.document.items() if key != 'capabilityPlan'}
             if job.output_mode == 'fulltext':
                 fields = []
                 report(job, 'fulltext', '已生成全文与 Markdown', 'done')
             elif semantic.enabled() and not job.ocr_only:
-                fields, call = await extract_semantic_units(job)
+                fields, call = await extraction_flow.extract(job, extract_semantic_units)
                 job.document = {**job.document, 'extractor': 'deepseek', 'model': call['model'], 'modelCall': call}
             else:
                 report(job, 'match', '正在按字段标签匹配')

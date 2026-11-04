@@ -40,6 +40,8 @@ export const usageCategories = [
   { id: 'grounding', name: '原文引用校验', engine: '文析' },
   { id: 'preview', name: '原文定位与预览', engine: 'PDFium' },
   { id: 'match', name: '字段标签匹配', engine: '本地规则' },
+  { id: 'seal', name: '印章文字识别', engine: 'MinerU / PP-OCR' },
+  { id: 'region-ocr', name: '局部文字补识别', engine: 'MinerU / PP-OCR' },
 ] as const;
 export type UsageEntry = (typeof usageCategories)[number] & { count: number };
 
@@ -50,8 +52,8 @@ export function capabilityUsage(traces: ProcessingTrace[]): UsageEntry[] {
     const split = step.id.lastIndexOf(':');
     const material = split < 0 ? '' : step.id.slice(0, split);
     const stage = step.id.slice(split + 1);
-    const category = /^extract-\d+$/.test(stage) ? 'semantic' : /^validate-\d+$/.test(stage) ? 'grounding'
-      : ['recognize', 'preview', 'match'].includes(stage) ? stage : null;
+    const category = /^(supplement-)?extract-\d+$/.test(stage) ? 'semantic' : /^(supplement-)?validate-\d+$/.test(stage) ? 'grounding'
+      : stage === 'seal-ocr' ? 'seal' : ['recognize', 'preview', 'match', 'region-ocr'].includes(stage) ? stage : null;
     if (!category) continue;
     const key = `${trace.id}\0${material}\0${category}`;
     if (seen.has(key)) continue;

@@ -40,8 +40,8 @@ export const capabilityComponents = [
     description: '根据用户要求与字段规则，选择和组织有依据的内容。', input: '识别文本、提取要求、字段规则', output: '单值、分段条款、表格、带依据的判断', limit: '业务完整性仍需复核；业务 Skill 的配置与自动选择尚未接入。' },
   { id: 'grounding', name: '原文引用校验', category: '校验', engine: '文析', state: '已接入',
     description: '核对值与引用，生成可定位的原文依据。', input: '候选结果及真实原文块', output: '通过、待核对、缺失等状态', limit: '引用通过只证明有出处，不能代替业务准确性与完整性核验。' },
-  { id: 'seal', name: '印章与签名核验', category: '图像', engine: '待选择', state: '待接入',
-    description: '核验实际印文、手写签名以及签署区域与角色的对应关系。', input: '原文图像、签署区域、核验要求', output: '待定义的图像核验结果', limit: '目前没有自动核验能力，相关字段继续标记为待图像核验。' },
+  { id: 'seal', name: '印章文字识别', category: '图像', engine: 'MinerU / PP-OCR', state: '已接入',
+    description: '读取印章区域中的单位名称、印文和编码，对照原图核验。', input: 'MinerU 定位的印章区域', output: '印文、识别置信度、来源页码与区域', limit: '适用于文析的印文字段；模糊或未读出的印文需人工核验。不核验印章真伪、签名身份或签章效力。' },
 ] as const;
 
 export interface HistoryEntry {

@@ -116,7 +116,7 @@ def prefer_pdf_text(path, ocr_blocks: list[dict]) -> tuple[list[dict], dict]:
                     fragmented.append(page_index + 1)
                     continue
                 preferred.append(page_index + 1)
-                # Keep seal regions only as visual context, never as proof of a seal's name.
+                # Native body text must never replace dedicated seal regions/OCR.
                 by_page[page_index] = lines + [block for block in by_page[page_index] if block.get('blockType') == 'seal']
             except (pdfium.PdfiumError, ValueError, IndexError):
                 # An unusable text layer must not discard already available OCR.

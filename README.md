@@ -19,6 +19,8 @@
 
 DeepSeek 调用链路、环境配置、输入预算、错误处理与接手验证见 [DeepSeek 接入交接说明](docs/development/deepseek-handover.md)。
 
+印章区域定位、专用印文 OCR、原图引用与云端模型准备见 [印章文字识别接入](docs/development/seal-recognition.md)。
+
 ## 运行模式
 
 | 模式 | 识别与模型 | 适用用途 |
@@ -70,7 +72,7 @@ sh mineru-local/启动文析.command
 
 ## 云端 API 版本
 
-运行前端和轻量业务后端，OCR 调用 MinerU 官方托管服务，语义提取和配置助手调用 DeepSeek。页面方向判断使用固定版本的轻量 CPU 模型，原图、校正页面和坐标关系保存在服务端。
+运行前端和轻量业务后端，文档 OCR 调用 MinerU 官方托管服务，语义提取和配置助手调用 DeepSeek。页面方向判断和印章区域文字识别使用固定版本的轻量 CPU 模型，原图、校正页面和坐标关系保存在服务端。印文 OCR 运行后释放工作进程，部署前需验证目标服务器的峰值内存。
 
 参见 [云端部署说明](deploy/live/README.md) 和 [方向模型来源与校验](deploy/live/models/README.md)。前端使用 `npm run build:live` 构建；密钥通过服务端环境文件注入。通用文析上传的材料会发送给 MinerU，识别文本及字段要求会发送给 DeepSeek。
 

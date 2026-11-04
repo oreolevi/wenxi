@@ -25,6 +25,10 @@ export interface SourceEvidence {
   originalPageIndex?: number;
   originalBBox?: [number, number, number, number];
   originalPolygon?: number[][];
+  confidence?: number;
+  recoverySourceRef?: string;
+  sealRecognition?: { status: string; engine: string; confidence?: number;
+    lines?: Array<{ text: string; confidence: number; polygon: number[][] }> };
 }
 
 export interface PreprocessingPolicy {
@@ -60,6 +64,10 @@ export interface ParsedDocument {
   requirements?: RequirementDefinition | null;
   pages: DocumentPage[];
   preprocessing?: PreprocessingReport;
+  sealRecognition?: { engine: string; regions: number; recognized: number; elapsedMs: number };
+  capabilityPlan?: { schemaVersion: number; base: string; seal?: string; recovery?: string;
+    maxRecoveryRounds: number; maxRecoveryFields: number; maxRecoveryRegions: number;
+    recoveryRounds: number; recoveryCapability?: string; recoveryFields?: string[]; recoveryRefs?: string[]; recoveryReason?: string };
   units?: Array<{ id: string; label: string; pages: number[]; needsReview: boolean }>;
 }
 
@@ -74,6 +82,8 @@ export interface ExtractedField {
   ref: string | null;
   aliases: string[];
   note: string;
+  sourceKind?: 'seal';
+  recoveryRefs?: string[];
   status: ReviewStatus;
   edited?: boolean;
   evidence?: SourceEvidence[];

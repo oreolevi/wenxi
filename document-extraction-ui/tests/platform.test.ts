@@ -46,8 +46,11 @@ test('历史页保留实际失败与队列状态，不将附件上传当作提�
   assert.equal(historyStats([]).tokens, null);
 });
 
-test('Skill示例引用的组件均可找到，印章能力明确未接入', () => {
+test('Skill引用可找到，印章文字识别不宣称真伪或签名核验', () => {
   for (const skill of initialSkills) for (const id of skill.components) assert(capabilityComponents.some(component => component.id === id));
-  assert.equal(capabilityComponents.find(component => component.id === 'seal')!.state, '待接入');
+  const seal = capabilityComponents.find(component => component.id === 'seal')!;
+  assert.equal(seal.state, '已接入');
+  assert.match(seal.name, /文字识别/);
+  assert.match(seal.limit, /不核验印章真伪、签名身份或签章效力/);
   assert(initialSkills[0].rules.some(rule => rule.field === '付款条件'));
 });

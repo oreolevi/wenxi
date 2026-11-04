@@ -349,7 +349,7 @@ def extract(reference, incoming, template, *, verify_layout=True):
     output = []
     for field in template['fields']:
         box = layout_alignment.box_incoming(field['region'], transforms[field['page']-1]) if field['region'] else None
-        blocks = [block for block in incoming['blocks'] if block['pageIndex'] == field['page'] - 1]
+        blocks = [block for block in incoming['blocks'] if block['pageIndex'] == field['page'] - 1 and block.get('text')]
         if field['method'] == 'anchor' and field['anchor'].strip():
             anchors = [block for block in blocks if normalize(field['anchor']) in normalize(block['text'])]
             if box and anchors:

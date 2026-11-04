@@ -46,7 +46,8 @@ def read_blocks(data: dict) -> list[dict]:
         for block in page_blocks:
             bbox = block.get('bbox')
             text = content_text(block.get('content', '')).strip()
-            if not text or block.get('type') in ['footer', 'header', 'page_number']:
+            kind = 'seal' if block.get('sub_type') == 'seal' else block.get('type', 'text')
+            if (not text and kind != 'seal') or block.get('type') in ['footer', 'header', 'page_number']:
                 continue
             if not isinstance(bbox, list) or len(bbox) != 4 or not all(isinstance(n, (float, int)) for n in bbox):
                 continue
@@ -54,7 +55,6 @@ def read_blocks(data: dict) -> list[dict]:
             if not (0 <= x0 < x1 <= 1 and 0 <= y0 < y1 <= 1):
                 continue
             ref = f'p{idx}-b{block["index"]}'
-            kind = 'seal' if block.get('sub_type') == 'seal' else block.get('type', 'text')
             parent = {'pageIndex': idx, 'blockIndex': block['index'], 'bbox': bbox,
                       'text': text, 'ref': ref, 'source': 'mineru', 'blockType': kind}
             if kind == 'table':
