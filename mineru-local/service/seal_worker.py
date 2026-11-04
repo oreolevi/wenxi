@@ -11,6 +11,9 @@ MODEL_HASHES = {
     'seal_PP-OCRv4_det_infer.onnx': '3e190df84542c2756975febe8f73603b587a23c7f7badfdd3fc8a986540d5bc0',
     'ch_PP-OCRv6_small_rec_infer.onnx': '5435fd747c9e0efe15a96d0b378d5bd157e9492ed8fd80edf08f30d02fa24634',
 }
+TEXT_DETECTOR = 'ch_PP-OCRv6_tiny_det_infer.onnx'
+TEXT_HASHES = {TEXT_DETECTOR: '193bab7a04fca699a6c82e6abb5b81bdb28177f0abd4062552b04908dafb19f8',
+               'ch_PP-OCRv6_small_rec_infer.onnx': MODEL_HASHES['ch_PP-OCRv6_small_rec_infer.onnx']}
 
 
 def file_hash(path):
@@ -21,8 +24,8 @@ def file_hash(path):
     return digest.hexdigest()
 
 
-def check_models(root):
-    for name, expected in MODEL_HASHES.items():
+def check_models(root, hashes=MODEL_HASHES):
+    for name, expected in hashes.items():
         if file_hash(root / name) != expected:
             raise ValueError('Seal model checksum mismatch')
 
@@ -56,13 +59,16 @@ def recognize(payload):
     ort.disable_telemetry_events()
 
     root = Path(payload['modelDir'])
-    check_models(root)
+    mode = payload.get('mode', 'seal')
+    if mode not in {'seal', 'text'}:
+        raise ValueError('Unsupported OCR mode')
+    check_models(root, MODEL_HASHES if mode == 'seal' else TEXT_HASHES)
     seed_cache(root, Path(payload['cacheDir']) / '.derived' / 'ocr-rec')
     # Derived compact recognition graph is cached in our writable runtime directory.
     get_config().model.base_dir = str(Path(payload['cacheDir']))
-    model = PPOCRv6ONNX(det_model_path=str(root / 'seal_PP-OCRv4_det_infer.onnx'),
+    model = PPOCRv6ONNX(det_model_path=str(root / ('seal_PP-OCRv4_det_infer.onnx' if mode == 'seal' else TEXT_DETECTOR)),
         rec_model_path=str(root / 'ch_PP-OCRv6_small_rec_infer.onnx'),
-        lang='seal', device='cpu', intra_op_num_threads=1, rec_batch_num=1)
+        lang='seal' if mode == 'seal' else 'ch', device='cpu', intra_op_num_threads=1, rec_batch_num=1)
     regions = payload['regions']
     if not isinstance(regions, list) or len(regions) > 16:
         raise ValueError('Too many seal regions')
@@ -84,7 +90,7 @@ if __name__ == '__main__':
         if len(sys.argv) == 3 and sys.argv[1] == '--prepare-cache':
             from mineru.model.runtime.onnx_rec import prepare_rec_model
             root = Path(sys.argv[2])
-            check_models(root)
+            check_models(root, {**MODEL_HASHES, **TEXT_HASHES})
             prepare_rec_model(str(root / 'ch_PP-OCRv6_small_rec_infer.onnx'), cache_dir=root / 'derived')
             print('Prepared and checked compact seal recognition graph')
             sys.exit(0)

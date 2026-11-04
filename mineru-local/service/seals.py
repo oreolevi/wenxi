@@ -24,28 +24,35 @@ def model_directory():
     return Path(os.getenv('WENXI_SEAL_MODEL_DIR', str(preprocessing.MODEL_ROOT)))
 
 
-def prepare(job):
+def prepare(job, refs=None, *, mode='seal', limit=MAX_REGIONS):
     """Crop the displayed corrected page; retain the crop's exact page transform."""
     regions, crops = [], []
     for block in job.blocks:
         if block.get('blockType') != 'seal':
             continue
-        if block.get('sealRecognition', {}).get('status') in {'recognized', 'low_confidence', 'empty'}:
+        if refs is not None and block['ref'] not in refs:
             continue
-        if len(regions) >= MAX_REGIONS:
-            block['sealRecognition'] = {'status': 'limit', 'engine': ENGINE}
+        key = 'sealRecognition' if mode == 'seal' else 'textRecovery'
+        if block.get(key, {}).get('status') in {'recognized', 'low_confidence', 'empty'}:
+            continue
+        if len(regions) >= limit:
+            if mode == 'seal':
+                block[key] = {'status': 'limit', 'engine': ENGINE}
             continue
         page = job.document['pages'][block['pageIndex']]
         path = job.directory / f'page-{page["number"]}.png'
         with Image.open(path) as image:
             x0, y0, x1, y1 = block['bbox']
+            if mode == 'text':
+                # Recover surrounding label/value rows, not the imprint in the circle.
+                x0, x1, y0, y1 = 0., 1., max(0., y0 - .025), min(1., y1 + .025)
             bounds = [max(0, math.floor(x0 * image.width)), max(0, math.floor(y0 * image.height)),
                       min(image.width, math.ceil(x1 * image.width)), min(image.height, math.ceil(y1 * image.height))]
             if bounds[0] >= bounds[2] or bounds[1] >= bounds[3]:
                 continue
             crop = image.crop(bounds).convert('RGB')
             crop.thumbnail((1600, 1600))
-            destination = job.directory / f'seal-crop-{len(regions)}.png'
+            destination = job.directory / f'{mode}-crop-{len(regions)}.png'
             crop.save(destination)
             regions.append({'ref': block['ref'], 'image': str(destination.resolve())})
             crops.append({'block': block, 'bounds': [bounds[0] / image.width, bounds[1] / image.height,
@@ -54,8 +61,8 @@ def prepare(job):
     return regions, crops
 
 
-def apply(job, response, crops):
-    """Only actual crop OCR can supply imprint text; no body-text fallback."""
+def decode_regions(response, crops):
+    """Validate all output before applying text; polygons refer to corrected pages."""
     if not isinstance(response, dict):
         raise ValueError('印章识别返回格式无效。')
     rows = response.get('regions', [])
@@ -95,17 +102,22 @@ def apply(job, response, crops):
         state = 'empty' if not lines else 'recognized' if all(item['confidence'] >= MIN_CONFIDENCE for item in lines) else 'low_confidence'
         updates.append((block, {'status': state, 'engine': ENGINE, 'lines': lines,
             'confidence': min((line['confidence'] for line in lines), default=0)}))
-    for block, result in updates:
+    return updates
+
+
+def apply(job, response, crops):
+    """Only actual crop OCR can supply imprint text; no body-text fallback."""
+    for block, result in decode_regions(response, crops):
         block['sealRecognition'] = result
         # Preserve low-score candidates for visual review; grounding will not accept them.
         block['text'] = '\n'.join(line['text'] for line in result['lines'])
     preprocessing.attach_mapping(job.blocks, job.document['pages'])
 
 
-async def enrich(job):
+async def enrich(job, refs=None):
     if os.getenv('WENXI_SEAL_OCR', 'on') == 'off' or not job.document:
         return
-    regions = [block for block in job.blocks if block.get('blockType') == 'seal']
+    regions = [block for block in job.blocks if block.get('blockType') == 'seal' and (refs is None or block['ref'] in refs)]
     if not regions:
         return
     if all(block.get('sealRecognition', {}).get('status') in {'recognized', 'low_confidence', 'empty'} for block in regions):
@@ -113,9 +125,26 @@ async def enrich(job):
     started = time.monotonic()
     report(job, 'seal-ocr', '正在识别印章文字', detail=f'{len(regions)} 个印章区域')
     try:
-        payload, crops = prepare(job)
+        payload, crops = prepare(job, refs)
         if not payload:
             return
+        response = await call_worker(job, payload)
+        apply(job, response, crops)
+        report(job, 'seal-ocr', '印章文字识别已完成', 'done', '识别结果仍需对照原图核验')
+    except (ValueError, OSError, asyncio.TimeoutError, ImportError):
+        for block in regions:
+            if 'sealRecognition' not in block:
+                block['sealRecognition'] = {'status': 'unavailable', 'engine': ENGINE}
+        report(job, 'seal-ocr', '印章文字未完成识别', 'error', '已保留印章区域，请对照原图核验')
+    finally:
+        job.document['sealRecognition'] = {'engine': ENGINE, 'regions': len(regions),
+            'recognized': sum(block.get('sealRecognition', {}).get('status') == 'recognized' for block in regions),
+            'elapsedMs': round((time.monotonic() - started) * 1000)}
+
+
+async def call_worker(job, payload, *, mode='seal'):
+    """One offline worker; keep credentials out and release it on every exit path."""
+    try:
         worker_env = {key: os.environ[key] for key in ('PATH', 'HOME', 'LANG', 'LC_ALL', 'TZ',
             'SYSTEMROOT', 'WINDIR', 'TMPDIR', 'TEMP', 'TMP', 'LD_LIBRARY_PATH') if key in os.environ}
         worker_env.update({'MINERU_HOME': str(ROOT / '.runtime/wenxi-seal-cache'),
@@ -132,17 +161,11 @@ async def enrich(job):
         except asyncio.CancelledError:
             job.process = await creation
             raise
-        content = json.dumps({'modelDir': str(model_directory()), 'cacheDir': str(ROOT / '.runtime/wenxi-seal-cache'), 'regions': payload}).encode()
+        content = json.dumps({'modelDir': str(model_directory()), 'cacheDir': str(ROOT / '.runtime/wenxi-seal-cache'), 'regions': payload, 'mode': mode}).encode()
         stdout, _ = await asyncio.wait_for(job.process.communicate(content), timeout=60)
         if job.process.returncode or len(stdout) > 1024 * 1024:
             raise ValueError('印章 OCR 暂不可用。')
-        apply(job, json.loads(stdout), crops)
-        report(job, 'seal-ocr', '印章文字识别已完成', 'done', '识别结果仍需对照原图核验')
-    except (ValueError, OSError, asyncio.TimeoutError, ImportError):
-        for block in regions:
-            if 'sealRecognition' not in block:
-                block['sealRecognition'] = {'status': 'unavailable', 'engine': ENGINE}
-        report(job, 'seal-ocr', '印章文字未完成识别', 'error', '已保留印章区域，请对照原图核验')
+        return json.loads(stdout)
     finally:
         if job.process and job.process.returncode is None:
             try:
@@ -155,6 +178,3 @@ async def enrich(job):
                 job.process.kill()
                 await job.process.wait()
         job.process = None
-        job.document['sealRecognition'] = {'engine': ENGINE, 'regions': len(regions),
-            'recognized': sum(block.get('sealRecognition', {}).get('status') == 'recognized' for block in regions),
-            'elapsedMs': round((time.monotonic() - started) * 1000)}

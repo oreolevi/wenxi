@@ -1,4 +1,4 @@
-"""Download only two pinned public MinerU seal weights; verify before installation."""
+"""Download three pinned public MinerU regional OCR weights; verify before installation."""
 import argparse
 import hashlib
 from pathlib import Path
@@ -7,7 +7,7 @@ import sys
 import httpx
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'mineru-local' / 'service'))
-from seal_worker import MODEL_HASHES
+from seal_worker import MODEL_HASHES, TEXT_HASHES
 
 REVISION = '358310b4f64b95f9fefc372ad899356e4111f376'
 BASE = f'https://huggingface.co/opendatalab/MinerU-4_models_onnx/resolve/{REVISION}/OCR/paddleocr/'
@@ -16,7 +16,7 @@ BASE = f'https://huggingface.co/opendatalab/MinerU-4_models_onnx/resolve/{REVISI
 def prepare(folder):
     folder.mkdir(parents=True, exist_ok=True)
     with httpx.Client(follow_redirects=True, timeout=60) as client:
-        for name, expected in MODEL_HASHES.items():
+        for name, expected in {**MODEL_HASHES, **TEXT_HASHES}.items():
             target = folder / name
             if target.is_file() and hashlib.sha256(target.read_bytes()).hexdigest() == expected:
                 print(name, 'verified')
