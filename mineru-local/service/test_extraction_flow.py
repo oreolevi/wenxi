@@ -75,6 +75,7 @@ class FlowTests(unittest.IsolatedAsyncioTestCase):
         async def stamp(value, refs):
             self.assertEqual(refs, {task.blocks[0]['ref']})
             value.blocks[0]['sealRecognition']['status'] = 'recognized'
+            value.blocks[0]['text'] = '虚构印章公司'
         recovered = field('企业名称', 'pending', value='虚构印章公司', evidence=[{'ref': task.blocks[0]['ref']}])
         with patch.object(flow.seals, 'enrich', AsyncMock(side_effect=stamp)) as specialist, \
                 patch.object(semantic, 'extract_fields', AsyncMock(return_value=([recovered], call('second')))) as retry:
@@ -185,6 +186,7 @@ class FlowTests(unittest.IsolatedAsyncioTestCase):
         original_blocks = task.blocks
         async def stamp(value, refs):
             value.blocks[0]['sealRecognition']['status'] = 'recognized'
+            value.blocks[0]['text'] = '虚构印章公司'
         async def cancel(value, prompt, names):
             self.assertEqual(value.seal_source_names, {'企业名称'})
             self.assertEqual(value.event_prefix, 'supplement-')

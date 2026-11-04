@@ -12,6 +12,7 @@ import uuid
 
 from .grounding import requires_image, rejected, validate_fields, visual_field
 from .progress import report, finish
+from . import seal_evidence
 
 ROOT = Path(__file__).resolve().parents[2]
 NODE = shutil.which('node')
@@ -51,10 +52,15 @@ SYSTEM += ('\n若提供 field_requirements，严格按各字段的 rule 决定�
            '字段表仅定义所需字段与业务规则，不是事实来源；所有字段值仍必须引用合同或发票的 blocks。'
            '不得将要求表中的示例、判断或说明当成合同事实。正文只说明双方签字盖章时，不应扩展为特定法人或授权人身份已经核实。\n')
 
-SYSTEM += ('\n印文字段的例外：仅当 blocks 中存在 type:"seal" 且 sealRecognition.status:"recognized" 的专用印章 OCR 文字时，'
-           '可以摘录印章单位名称、印文、印章类型或编码，使用 kind:text/list 并逐字引用这些 seal blocks。'
+SYSTEM += ('\n印文字段的例外：仅当 blocks 中存在专用印章 OCR 产生的 type:"seal" 文字片段时，'
+           '可以摘录印章单位名称、印文、印章类型或编码，使用 kind:text/list 并逐字引用这些 seal blocks；低分片段按下述候选规则处理。'
            '正文中的公司名不能作为印文字段的依据。未提供专用印文时仍返回 kind:visual。'
            '印章真伪、签名身份、盖章关系和是否有效始终需要图像及业务核验，不能由识别到的文字作结论。\n')
+
+SYSTEM += ('\n印章 OCR 按文字片段提供独立 ref、sealParentRef 与分数；同一枚章的一段低分不能否定其他可读片段。'
+           'sealRecognition.status:"low_confidence" 的实际印文可以逐字引用以提供候选，系统会单独标为待核验，'
+           '不得猜字、改字或补齐。类别、单位、编码分别按实际片段对应，不把数字编码当单位。'
+           '完整印章内容使用 list 分别引用各片段，保留低分片段供候选核验；不要将跨片段文字拼成单个 raw_value。\n')
 
 SYSTEM += ('\n可选的来源与补识别声明：source_kind 只能是 body 或 seal。根据本次 request、requested_fields 与 field_requirements '
            '理解所需来源；例如字段叫“企业名称”，但要求从公章读取，应设 source_kind:"seal"。'
@@ -78,10 +84,10 @@ def messages_for(blocks: list[dict], prompt: str, hints: list[str], requirements
         context['field_requirements'] = [{key: item[key] for key in ['name', 'rule', 'cell', 'group']}
                                          for item in requirements['fields'] if item['name'] in hints]
         context['requirements_source'] = {'fileName': requirements['fileName'], 'sheet': requirements['sheet']}
-    for block in blocks:
+    for block in seal_evidence.project(blocks):
         entry = {'ref': block['ref'], 'page': block['pageIndex'] + 1, 'text': block['text'],
                  'type': block.get('blockType', 'text'), 'bbox': block['bbox']}
-        for key in ['tableRows', 'rowRef', 'columnIndex', 'lineRef', 'source', 'confidence', 'recoverySourceRef']:
+        for key in ['tableRows', 'rowRef', 'columnIndex', 'lineRef', 'source', 'confidence', 'recoverySourceRef', 'sealParentRef']:
             if key in block:
                 entry[key] = block[key]
         if block.get('sealRecognition'):
@@ -178,6 +184,7 @@ def aggregate_calls(calls: list[dict], started: float, outcome: str) -> dict:
 
 async def extract_fields(job, prompt: str, hints: list[str]) -> tuple[list[dict], dict]:
     started = time.monotonic()
+    seal_evidence.attach_mapping(job.blocks, (getattr(job, 'document', None) or {}).get('pages', []))
     names = list(dict.fromkeys(hints))
     text_names = [name for name in names if not requires_image(name, job.blocks)]
     batches = [text_names[index:index + BATCH_SIZE] for index in range(0, len(text_names), BATCH_SIZE)]

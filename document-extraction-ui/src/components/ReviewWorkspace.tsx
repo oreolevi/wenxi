@@ -31,7 +31,7 @@ function FieldCard({ field, selected, onSelect, onEvidence, onEdit, onConfirm, o
 }) {
   const reviewed = ['confirmed', 'corrected'].includes(field.status);
   const colors = { pending: 'default', confirmed: 'success', corrected: 'processing', missing: 'warning', rejected: 'error', visual_required: 'warning' };
-  const structured = !!(field.table || field.items?.length);
+  const structured = !field.edited && !!(field.table || field.items?.length);
   const pages = [...new Set((field.evidence || []).map(item => item.pageIndex + 1))].sort((a, b) => a - b);
   return <Card size="small" className={`field-card ${selected ? 'selected' : ''}`} data-field-key={field.key}>
     <button type="button" className="field-primary" aria-label={`查看 ${field.name} 的原文依据`} aria-pressed={selected} onClick={onSelect}>
@@ -39,10 +39,18 @@ function FieldCard({ field, selected, onSelect, onEvidence, onEdit, onConfirm, o
         {field.note && <Tooltip title={field.note}><InfoCircleOutlined aria-label={`${field.name}的处理说明`} /></Tooltip>}
         {field.status !== 'pending' && <Tag color={colors[field.status]} icon={reviewed ? <CheckOutlined /> : <WarningOutlined />}>{reviewLabels[field.status]}</Tag>}
       </span></div>
-      {!structured && <div className={`field-value ${field.value ? '' : 'empty'}`}>{field.value || (field.status === 'visual_required' ? '请核验原始图像' : field.status === 'rejected' ? '提取依据待核对' : '未找到')}</div>}
+      {!structured && <div className={`field-value ${field.value ? '' : 'empty'}`}>{field.value || (field.candidates?.length ? '尚未填写字段值' : field.status === 'visual_required' ? '请核验原始图像' : field.status === 'rejected' ? '提取依据待核对' : '未找到')}</div>}
     </button>
     {structured && <StructuredValue field={field} onEvidence={onEvidence} />}
-    {['rejected', 'visual_required'].includes(field.status) && <p className="field-issue-note">{field.note}</p>}
+    {!!field.candidates?.length && !reviewed && <div className="seal-candidates" aria-label={`${field.name}的候选印文`}>
+      <span className="seal-candidate-label">候选印文 · 需核对</span>
+      {field.candidates.map((candidate, index) => <button key={index} type="button" className="seal-candidate"
+        aria-label={`定位 ${field.name} 的候选印文 ${index + 1}`} onClick={() => onEvidence(candidate.evidence)}>
+        <span>{candidate.value}</span><AimOutlined />
+      </button>)}
+      <small>候选片段未计入字段值，请对照原图核对后修改。</small>
+    </div>}
+    {['rejected', 'visual_required'].includes(field.status) && !(field.status === 'visual_required' && field.candidates?.length) && <p className="field-issue-note">{field.note}</p>}
     <div className="field-card-footer"><Tooltip title={field.ref ? '定位原文' : '暂无原文依据'}><Button className="field-evidence" type="text" size="small" icon={field.ref ? <AimOutlined /> : <WarningOutlined />} aria-label={`定位 ${field.name} 的原文`} onClick={onSelect}>
       {field.ref ? (field.kind === 'visual' ? '相关图像区域' : field.ref.startsWith('line-') ? '原文' : `第 ${field.page} 页`) : '无依据'}
     </Button></Tooltip>

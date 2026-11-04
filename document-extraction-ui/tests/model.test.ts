@@ -129,3 +129,21 @@ test('结构化明细导出保留单元格依据，图像上下文不冒充印�
   assert.equal(exported[1].has_evidence, false);
   assert.equal(exported[1].evidence_role, 'image_context');
 });
+
+test('低分印文候选独立导出，批量确认不会采纳，人工修改保留候选来源', () => {
+  const evidence = { pageIndex: 0, blockIndex: 1, bbox: [.1,.1,.2,.2] as [number,number,number,number],
+    text: '虚构候选公司', ref: 'p0-b1-s0', blockType: 'seal', confidence: .8 };
+  const field = { ...fixtures.application.fields[0], name: '印章单位', kind: 'visual' as const,
+    value: '', raw: '', status: 'visual_required' as const, validationStatus: 'visual_required' as const,
+    ref: evidence.ref, evidence: [evidence], candidates: [{ value: evidence.text, confidence: .8, evidence: [evidence] }] };
+  assert.equal(reviewField(field), field);
+  const json = JSON.parse(createExport([{ ...demo(), results: [field] }], 'json').content).records[0];
+  assert.equal(json.value, ''); assert.equal(json.raw_value, '');
+  assert.equal(json.has_evidence, false); assert.equal(json.evidence_role, 'image_context');
+  assert.equal(json.recognition_candidates[0].value, evidence.text);
+  const csv = createExport([{ ...demo(), results: [field] }], 'csv').content;
+  assert.doesNotMatch(csv, /虚构候选公司/);
+  const corrected = reviewField(field, '人工核定名称');
+  assert.equal(corrected.status, 'corrected'); assert.equal(corrected.raw, '');
+  assert.equal(corrected.candidates, field.candidates);
+});

@@ -11,11 +11,11 @@ import time
 
 from PIL import Image
 
-from . import preprocessing
+from . import preprocessing, seal_evidence
 from .progress import report
 
-ENGINE = 'MinerU / PP-OCR seal / ONNX CPU'
-MIN_CONFIDENCE = .85
+ENGINE = seal_evidence.ENGINE
+MIN_CONFIDENCE = seal_evidence.MIN_CONFIDENCE
 MAX_REGIONS = 16
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -33,7 +33,7 @@ def prepare(job, refs=None, *, mode='seal', limit=MAX_REGIONS):
         if refs is not None and block['ref'] not in refs:
             continue
         key = 'sealRecognition' if mode == 'seal' else 'textRecovery'
-        if block.get(key, {}).get('status') in {'recognized', 'low_confidence', 'empty'}:
+        if block.get(key, {}).get('status') in {'recognized', 'partial', 'low_confidence', 'empty'}:
             continue
         if len(regions) >= limit:
             if mode == 'seal':
@@ -99,7 +99,8 @@ def decode_regions(response, crops):
                 if min(p[0] for p in points) >= max(p[0] for p in points) or min(p[1] for p in points) >= max(p[1] for p in points):
                     raise ValueError('印章识别坐标退化。')
                 lines.append({'text': text.strip(), 'confidence': score, 'polygon': points})
-        state = 'empty' if not lines else 'recognized' if all(item['confidence'] >= MIN_CONFIDENCE for item in lines) else 'low_confidence'
+        reliable = sum(item['confidence'] >= MIN_CONFIDENCE for item in lines)
+        state = 'empty' if not lines else 'recognized' if reliable == len(lines) else 'partial' if reliable else 'low_confidence'
         updates.append((block, {'status': state, 'engine': ENGINE, 'lines': lines,
             'confidence': min((line['confidence'] for line in lines), default=0)}))
     return updates
@@ -112,6 +113,7 @@ def apply(job, response, crops):
         # Preserve low-score candidates for visual review; grounding will not accept them.
         block['text'] = '\n'.join(line['text'] for line in result['lines'])
     preprocessing.attach_mapping(job.blocks, job.document['pages'])
+    seal_evidence.attach_mapping(job.blocks, job.document['pages'])
 
 
 async def enrich(job, refs=None):
@@ -120,7 +122,7 @@ async def enrich(job, refs=None):
     regions = [block for block in job.blocks if block.get('blockType') == 'seal' and (refs is None or block['ref'] in refs)]
     if not regions:
         return
-    if all(block.get('sealRecognition', {}).get('status') in {'recognized', 'low_confidence', 'empty'} for block in regions):
+    if all(block.get('sealRecognition', {}).get('status') in {'recognized', 'partial', 'low_confidence', 'empty'} for block in regions):
         return
     started = time.monotonic()
     report(job, 'seal-ocr', '正在识别印章文字', detail=f'{len(regions)} 个印章区域')
@@ -130,7 +132,10 @@ async def enrich(job, refs=None):
             return
         response = await call_worker(job, payload)
         apply(job, response, crops)
-        report(job, 'seal-ocr', '印章文字识别已完成', 'done', '识别结果仍需对照原图核验')
+        sources = seal_evidence.sources(regions)
+        reliable = sum(block['sealRecognition']['status'] == 'recognized' for block in sources)
+        uncertain = len(sources) - reliable
+        report(job, 'seal-ocr', '印章文字识别已完成', 'done', f'{reliable} 段可提取，{uncertain} 段识别不确定，需对照原图核验')
     except (ValueError, OSError, asyncio.TimeoutError, ImportError):
         for block in regions:
             if 'sealRecognition' not in block:

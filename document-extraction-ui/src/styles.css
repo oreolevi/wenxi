@@ -674,3 +674,10 @@ html,body,.application,.main-content { background: var(--canvas); color: var(--t
 .platform-data-table .ant-table-thead > tr > th { color:var(--text-muted); font-weight:500; }
 @media(max-width:650px) { .operations-analysis { grid-template-columns:minmax(0,1fr); }.operations-filter .platform-scope-help { margin-left:0; } }
 @media(max-width:600px) { .operations-phase-list > div { grid-template-columns:105px minmax(30px,1fr) 65px; gap:8px; }.application-flow { gap:8px; } }
+
+.seal-candidates{margin:0 11px 8px;padding:9px 10px;background:var(--warning-bg);border:1px solid var(--warning-border);border-radius:5px;display:flex;flex-direction:column;gap:6px}
+.seal-candidate-label{font-size:10px;color:var(--warning-text);font-weight:500}
+.seal-candidate{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;width:100%;padding:2px 0;border:0;background:transparent;color:var(--text);text-align:left;font:inherit;font-size:12px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;cursor:pointer}
+.seal-candidate .anticon{margin-top:4px;flex-shrink:0;color:var(--accent)}
+.seal-candidate:hover,.seal-candidate:focus-visible{color:var(--accent)}
+.seal-candidates small{color:var(--text-muted);font-size:10px;line-height:1.6}
