@@ -19,6 +19,8 @@
 
 DeepSeek 调用链路、环境配置、输入预算、错误处理与接手验证见 [DeepSeek 接入交接说明](docs/development/deepseek-handover.md)。
 
+水印、手写数字与印章的现有能力及验证边界见 [视觉识别验证记录](docs/development/visual-ocr-evaluation.md)；可复现的虚构样例生成和独立接口探测见 [验证工具说明](mineru-local/benchmarks/README.md)。
+
 ## 运行模式
 
 | 模式 | 识别与模型 | 适用用途 |
