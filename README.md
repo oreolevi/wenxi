@@ -17,6 +17,8 @@
 
 部署方式为 Docker 业务后端加 HTTPS 入口，OCR 和语义提取调用云端 API。详细配置、持久化及回退方式见 [云端部署说明](deploy/live/README.md)。
 
+DeepSeek 调用链路、环境配置、输入预算、错误处理与接手验证见 [DeepSeek 接入交接说明](docs/development/deepseek-handover.md)。
+
 ## 运行模式
 
 | 模式 | 识别与模型 | 适用用途 |
