@@ -27,6 +27,7 @@ export interface SourceEvidence {
   originalPolygon?: number[][];
   confidence?: number;
   recoverySourceRef?: string;
+  sealParentRef?: string;
   sealRecognition?: { status: string; engine: string; confidence?: number;
     lines?: Array<{ text: string; confidence: number; polygon: number[][] }> };
 }
@@ -84,6 +85,7 @@ export interface ExtractedField {
   note: string;
   sourceKind?: 'seal';
   recoveryRefs?: string[];
+  candidates?: Array<{ value: string; confidence: number; evidence: SourceEvidence[] }>;
   status: ReviewStatus;
   edited?: boolean;
   evidence?: SourceEvidence[];

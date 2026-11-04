@@ -132,6 +132,7 @@ export function exportRecords(materials: Material[]) {
     result_kind: field.kind || 'text', validation_status: field.validationStatus || (field.ref ? 'passed' : 'missing'),
     extraction_requirement: field.requirement,
     source_items: field.items, table: field.table, decision: field.decision, validation_issues: field.issues || [],
+    recognition_candidates: field.candidates || [],
   })));
 }
 

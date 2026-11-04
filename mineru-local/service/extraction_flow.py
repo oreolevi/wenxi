@@ -3,12 +3,12 @@ import asyncio
 import os
 import time
 
-from . import grounding, regional_ocr, seals, semantic
+from . import grounding, regional_ocr, seals, semantic, seal_evidence
 from .progress import report
 
 MAX_RECOVERY_FIELDS = min(6, semantic.BATCH_SIZE)
 MAX_RECOVERY_REGIONS = 2
-COMPLETE = {'recognized', 'low_confidence', 'empty'}
+COMPLETE = {'recognized', 'partial', 'low_confidence', 'empty'}
 
 
 def regions(job, pages=None):
@@ -138,8 +138,7 @@ async def extract(job, base_extract):
     if target['capability'] == 'seal':
         plan['seal'] = 'supplemental_requested'
         await seals.enrich(job, set(target['refs']))
-        changed = any(block.get('sealRecognition', {}).get('status') == 'recognized' for block in regions(job)
-                      if block['ref'] in target['refs'])
+        changed = bool(seal_evidence.sources([block for block in regions(job) if block['ref'] in target['refs']]))
     else:
         changed = await regional_ocr.enrich(job, set(target['refs']))
     if not changed:
@@ -162,7 +161,7 @@ async def extract(job, base_extract):
         by_name = {field['name']: field for field in retry}
         for before in target['fields']:
             after = by_name.get(before['name'])
-            if after and after['status'] == 'pending' and after.get('evidence'):
+            if after and ((after['status'] == 'pending' and after.get('evidence')) or after.get('candidates')):
                 # Keep original unit identity and stable field key for client merges.
                 before.update({key: value for key, value in after.items() if key not in {'key', 'unitId', 'unitLabel'}})
                 before.pop('recoveryRefs', None)

@@ -7,6 +7,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
 
 from .extraction import ALIASES
+from . import seal_evidence
 
 
 class Quote(BaseModel):
@@ -77,13 +78,11 @@ def seal_text_question(name: str) -> bool:
 
 
 def recognized_seals(blocks: list[dict]) -> list[dict]:
-    return [block for block in blocks if block.get('blockType') == 'seal' and block.get('text')
-            and block.get('sealRecognition', {}).get('status') == 'recognized'
-            and block.get('sealRecognition', {}).get('engine') == 'MinerU / PP-OCR seal / ONNX CPU']
+    return [block for block in seal_evidence.sources(blocks) if block['sealRecognition']['status'] == 'recognized']
 
 
 def requires_image(name: str, blocks: list[dict]) -> bool:
-    return needs_visual(name) and not (seal_text_question(name) and recognized_seals(blocks))
+    return needs_visual(name) and not (seal_text_question(name) and seal_evidence.sources(blocks))
 
 
 def base_field(name: str) -> dict:
@@ -111,6 +110,7 @@ def checked_fact(data: dict, source: dict, label='') -> dict:
             raise ValueError('提取值缺少原文依据。')
         found = []
         supported = False
+        reliable, uncertain = [], []
         for quote in item.evidence:
             block = source.get(quote.ref)
             canonical = source_quote(block['text'], quote.quote) if block else None
@@ -120,8 +120,14 @@ def checked_fact(data: dict, source: dict, label='') -> dict:
             supported |= verbatim(item.raw_value) in verbatim(canonical)
             if not any(evidence['ref'] == block['ref'] for evidence in found):
                 found.append({**block, 'quote': canonical})
+            if verbatim(item.raw_value) in verbatim(canonical):
+                (uncertain if block.get('sealRecognition', {}).get('status') == 'low_confidence' else reliable).append({**block, 'quote': canonical})
         if not supported:
             raise ValueError('字段值不在单个原文摘录中；多段内容需分别引用。')
+        if uncertain and not reliable:
+            return {**output, 'status': 'rejected', 'issueCode': 'seal_confidence', 'issue': '印文识别不确定，候选文字需人工核验。',
+                    'candidate': {'value': item.raw_value, 'confidence': min(block['confidence'] for block in uncertain), 'evidence': uncertain}}
+        found = [block for block in found if block.get('sealRecognition', {}).get('status') != 'low_confidence']
         return {**output, 'value': item.raw_value, 'raw': item.raw_value, 'status': 'pending', 'evidence': found}
     except ValueError as exc:
         message = str(exc) if not hasattr(exc, 'errors') else '单元格或摘录的数据结构不符合要求。'
@@ -140,7 +146,7 @@ def attach_evidence(output: dict, facts: list[dict]):
         output.update(ref=first['ref'], page=first['pageIndex'] + 1)
 
 
-def visual_field(name: str, blocks: list[dict]) -> dict:
+def visual_field(name: str, blocks: list[dict], *, seal_source=False) -> dict:
     output = base_field(name)
     signature_pages = {block['pageIndex'] for block in blocks if '委托代理' in block['text'] and ('甲方' in block['text'] or '单位名称' in block['text'])}
     contexts = sorted([block for block in blocks if block.get('blockType') == 'seal'],
@@ -151,8 +157,19 @@ def visual_field(name: str, blocks: list[dict]) -> dict:
         output.update(ref=contexts[0]['ref'], page=contexts[0]['pageIndex'] + 1, evidence=contexts)
     output.update(kind='visual', status='visual_required', validationStatus='visual_required',
                   note='请对照原图核验。印章文字识别不证明印章真伪、签名身份或盖章关系；未读出的印文不以正文单位名代替。')
-    if seal_text_question(name):
+    if seal_text_question(name) or seal_source:
         output['sourceKind'] = 'seal'
+        output['candidates'] = seal_evidence.candidates(blocks)
+        if output['candidates']:
+            output['note'] = '印文识别不确定。候选片段尚未计入字段值，请对照原图核对后填写。'
+            first = output['candidates'][0]['evidence'][0]
+            output.update(ref=first['ref'], page=first['pageIndex'] + 1, evidence=[first])
+        elif not contexts:
+            output['note'] = '未定位到可读取的印章区域，请对照原图核验。'
+        elif any(block.get('sealRecognition', {}).get('status') == 'unavailable' for block in contexts):
+            output['note'] = '印章文字识别未完成，已保留原图区域供核验。'
+        else:
+            output['note'] = '尚未取得此字段的可靠印文，请对照原图核验。'
     return output
 
 
@@ -166,17 +183,19 @@ def check_field(data: dict, name: str, blocks: list[dict]) -> dict:
         return rejected(name, '字段返回结构不符合要求，其他字段继续保留。', 'schema')
     all_blocks = blocks
     seal_question = seal_text_question(name) or declared_seal
-    if seal_question and not recognized_seals(blocks):
-        return {**visual_field(name, blocks), 'sourceKind': 'seal'}
-    incomplete_seals = seal_question and any(block.get('blockType') == 'seal' and block not in recognized_seals(blocks) for block in blocks)
+    sources = seal_evidence.sources(blocks)
+    if seal_question and not sources:
+        return visual_field(name, blocks, seal_source=True)
+    readable_parents = {block.get('sealParentRef', block['ref']) for block in sources}
+    incomplete_seals = seal_question and any(block.get('blockType') == 'seal' and block['ref'] not in readable_parents for block in blocks)
     if seal_question:
         # A correctly quoted company name in the body is still not an imprint.
-        blocks = recognized_seals(blocks)
+        blocks = sources
     else:
         # Imprint text alone does not establish the role of a body-text party.
         blocks = [block for block in blocks if block.get('blockType') != 'seal']
     if item.kind == 'visual':
-        return {**visual_field(name, blocks), **({'sourceKind': 'seal'} if seal_question else {})}
+        return visual_field(name, blocks, seal_source=seal_question)
     if item.source_kind == 'seal' and not seal_source_allowed(name):
         return rejected(name, '此字段需要正文或图像核验，不能由印文推定。', 'seal_source')
     if seal_question and item.kind not in {'text', 'list'}:
@@ -236,9 +255,26 @@ def check_field(data: dict, name: str, blocks: list[dict]) -> dict:
         output['value'] = '\n'.join('；'.join(f'{column}：{cell["value"] or ("待核对" if cell["status"] == "rejected" else "未列明")}' for column, cell in zip(columns, row['cells'])) for row in rows)
     for index, fact in enumerate(facts):
         if fact['status'] == 'rejected':
-            output['issues'].append({'path': f'{name}[{index + 1}]', 'code': 'evidence', 'message': fact['issue']})
+            output['issues'].append({'path': f'{name}[{index + 1}]', 'code': fact.get('issueCode', 'evidence'), 'message': fact['issue']})
     output['issues'].extend({'path': name, 'code': 'row_association', 'message': message} for message in row_issues)
     attach_evidence(output, facts)
+    candidates = [fact['candidate'] for fact in facts if fact.get('candidate')]
+    complete_imprint = seal_question and re.search(r'内容|印文|文字', name) and not re.search(r'名称|单位|类型|类别|编码|编号|号码', name)
+    if complete_imprint and (output['evidence'] or not output['issues']):
+        refs = {e['ref'] for candidate in candidates for e in candidate['evidence']}
+        candidates.extend(candidate for candidate in seal_evidence.candidates(all_blocks) if candidate['evidence'][0]['ref'] not in refs)
+        if candidates and not any(fact.get('candidate') for fact in facts):
+            output['issues'].append({'path': name, 'code': 'seal_uncertain', 'message': '另有印文片段识别不确定，完整内容尚需核对。'})
+    if seal_question and not output['evidence'] and (candidates or (not output['issues'] and seal_evidence.candidates(all_blocks))):
+        visual = visual_field(name, all_blocks, seal_source=True)
+        if candidates:
+            visual['candidates'] = candidates
+            first = candidates[0]['evidence'][0]
+            visual.update(evidence=[first], ref=first['ref'], page=first['pageIndex'] + 1)
+            visual['note'] = '此字段的印文识别不确定。候选文字尚未计入字段值，请对照原图核对后填写。'
+        return visual
+    if candidates:
+        output['candidates'] = candidates
     if any(block.get('blockType') == 'ocr_recovery' for block in output['evidence']):
         output['note'] = '包含局部文字补识别的引用，需对照原图核验。' + output['note']
     if incomplete_seals:
@@ -253,7 +289,10 @@ def check_field(data: dict, name: str, blocks: list[dict]) -> dict:
         output.update(status='rejected', validationStatus='partial' if output['evidence'] else 'rejected')
         if item.kind == 'judgment':
             output.update(value='', decision='uncertain')
-        output['note'] = f'{len(output["issues"])} 项依据或结构待核对；已通过的摘录保留。' + output['note']
+        if all(issue['code'] in {'seal_confidence', 'seal_uncertain'} for issue in output['issues']):
+            output['note'] = '可读印文已保留，其他候选片段需对照原图核验。'
+        else:
+            output['note'] = f'{len(output["issues"])} 项依据或结构待核对；已通过的摘录保留。' + output['note']
     elif output['evidence']:
         output.update(status='pending', validationStatus='passed')
     else:
