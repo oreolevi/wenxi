@@ -1,0 +1,23 @@
+// Generated image assets; stable IDs and order are part of saved avatar preferences.
+export const avatarLibrary = [
+  { id: "01", name: "海军蓝贝雷帽", src: new URL("./assets/avatars/hand-drawn/avatar-01.webp", import.meta.url).href },
+  { id: "02", name: "青绿针织帽", src: new URL("./assets/avatars/hand-drawn/avatar-02.webp", import.meta.url).href },
+  { id: "03", name: "花朵发带", src: new URL("./assets/avatars/hand-drawn/avatar-03.webp", import.meta.url).href },
+  { id: "04", name: "金色发夹", src: new URL("./assets/avatars/hand-drawn/avatar-04.webp", import.meta.url).href },
+  { id: "05", name: "墨黑短寸 · 圆框眼镜", src: new URL("./assets/avatars/hand-drawn/avatar-05.webp", import.meta.url).href },
+  { id: "06", name: "铜橙卷发 · 芥黄小帽", src: new URL("./assets/avatars/hand-drawn/avatar-06.webp", import.meta.url).href },
+  { id: "07", name: "银灰侧分 · 青绿耳机", src: new URL("./assets/avatars/hand-drawn/avatar-07.webp", import.meta.url).href },
+  { id: "08", name: "雾蓝碎发 · 奶油鸭舌帽", src: new URL("./assets/avatars/hand-drawn/avatar-08.webp", import.meta.url).href },
+  { id: "09", name: "深棕波波头 · 珊瑚蝴蝶结", src: new URL("./assets/avatars/hand-drawn/avatar-09.webp", import.meta.url).href },
+  { id: "10", name: "栗红长卷发 · 鼠尾草发带", src: new URL("./assets/avatars/hand-drawn/avatar-10.webp", import.meta.url).href },
+  { id: "11", name: "乌黑丸子头 · 丁香发圈", src: new URL("./assets/avatars/hand-drawn/avatar-11.webp", import.meta.url).href },
+  { id: "12", name: "蜜金双辫 · 青蓝缎带", src: new URL("./assets/avatars/hand-drawn/avatar-12.webp", import.meta.url).href },
+  { id: "13", name: "巧克力中分 · 海蓝细发带", src: new URL("./assets/avatars/hand-drawn/avatar-13.webp", import.meta.url).href },
+  { id: "14", name: "麦金蓬松短发 · 陶红贝雷帽", src: new URL("./assets/avatars/hand-drawn/avatar-14.webp", import.meta.url).href },
+  { id: "15", name: "烟灰短卷发 · 赭红圆框", src: new URL("./assets/avatars/hand-drawn/avatar-15.webp", import.meta.url).href },
+  { id: "16", name: "墨黑短编发 · 奶白运动发带", src: new URL("./assets/avatars/hand-drawn/avatar-16.webp", import.meta.url).href },
+  { id: "17", name: "丁香紫精灵短发 · 金色星星发夹", src: new URL("./assets/avatars/hand-drawn/avatar-17.webp", import.meta.url).href },
+  { id: "18", name: "玫瑰棕内扣短发 · 奶油圆框", src: new URL("./assets/avatars/hand-drawn/avatar-18.webp", import.meta.url).href },
+  { id: "19", name: "深棕高马尾 · 陶红蝴蝶发圈", src: new URL("./assets/avatars/hand-drawn/avatar-19.webp", import.meta.url).href },
+  { id: "20", name: "月白低盘发 · 梅紫小花", src: new URL("./assets/avatars/hand-drawn/avatar-20.webp", import.meta.url).href },
+] as const;

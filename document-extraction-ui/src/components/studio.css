@@ -156,7 +156,6 @@
 .studio-setup-container{overflow:auto;flex:1;min-height:0}
 .studio-setup-container[hidden],.studio-property-tabs[hidden],.studio-mode-options[hidden]{display:none!important}
 .studio-property-tabs[hidden]{flex:0}
-.pixel-avatar img{image-rendering:auto;object-fit:contain}
 
 /* The assistant shares the rule editor's right panel, not a separate execution mode. */
 .studio-property-tabs .ant-tabs-content,.studio-property-tabs .ant-tabs-body-content,.studio-property-tabs .ant-tabs-tabpane{height:100%}
