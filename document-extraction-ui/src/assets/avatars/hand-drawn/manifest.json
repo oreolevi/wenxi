@@ -1,0 +1,130 @@
+{
+  "origin": "Generated with OpenAI image generation; original Wenxi avatar designs, not business materials.",
+  "size": [
+    256,
+    256
+  ],
+  "format": "WebP with alpha",
+  "avatars": [
+    {
+      "id": "01",
+      "name": "海军蓝贝雷帽",
+      "file": "avatar-01.webp",
+      "originalSha256": "d1f3e5dfd12b46d82f11cf6b7d386a8305328945302486e64128d816d3662f75"
+    },
+    {
+      "id": "02",
+      "name": "青绿针织帽",
+      "file": "avatar-02.webp",
+      "originalSha256": "45326aac9b42a6280c902feb4c454b1cb40cb4d83988215b521f75125ad4eb66"
+    },
+    {
+      "id": "03",
+      "name": "花朵发带",
+      "file": "avatar-03.webp",
+      "originalSha256": "e13409edeb89c9edc77f343558eb221e3012596f48d171bbf1e0c9cc2546469a"
+    },
+    {
+      "id": "04",
+      "name": "金色发夹",
+      "file": "avatar-04.webp",
+      "originalSha256": "7c21301cd958a99e2ed719765456f17e93c58dbb3922e8c6e720a1cae9809b47"
+    },
+    {
+      "id": "05",
+      "name": "墨黑短寸 · 圆框眼镜",
+      "file": "avatar-05.webp",
+      "originalSha256": "80cfefdef8eda30a2a5dcb94a7817459c4c61f17f8758ec1c4e888d2c4988f0e"
+    },
+    {
+      "id": "06",
+      "name": "铜橙卷发 · 芥黄小帽",
+      "file": "avatar-06.webp",
+      "originalSha256": "f0695e0dc6600c6d54402a6aae4a3622c86a5cbbccb5627534b25da924b164fb"
+    },
+    {
+      "id": "07",
+      "name": "银灰侧分 · 青绿耳机",
+      "file": "avatar-07.webp",
+      "originalSha256": "03070af8e64663b65ec6b716249638c9308c32e975087b2ec34397ea0eacf248"
+    },
+    {
+      "id": "08",
+      "name": "雾蓝碎发 · 奶油鸭舌帽",
+      "file": "avatar-08.webp",
+      "originalSha256": "eb1008550fc049be4319b749aef5c95f2c834ff4ec237ae0b57a0535bf632dcb"
+    },
+    {
+      "id": "09",
+      "name": "深棕波波头 · 珊瑚蝴蝶结",
+      "file": "avatar-09.webp",
+      "originalSha256": "2b0eba5dc0fd83b4b4e92300df0bb1afcc8d2cd06a4bc092e86597c725ebb6e7"
+    },
+    {
+      "id": "10",
+      "name": "栗红长卷发 · 鼠尾草发带",
+      "file": "avatar-10.webp",
+      "originalSha256": "c5372a10388f6b7cdfb1596fa0bd3432065c2ce873e21d27fe5eeef75f5035a7"
+    },
+    {
+      "id": "11",
+      "name": "乌黑丸子头 · 丁香发圈",
+      "file": "avatar-11.webp",
+      "originalSha256": "d29f2fd183be0646c036df3fb099779c10b30c9e44e4f610e487ac275530110f"
+    },
+    {
+      "id": "12",
+      "name": "蜜金双辫 · 青蓝缎带",
+      "file": "avatar-12.webp",
+      "originalSha256": "8ea08867b9ce65e1f92802ab6841176d0ec8d4c751b87250130e969fa46f3012"
+    },
+    {
+      "id": "13",
+      "name": "巧克力中分 · 海蓝细发带",
+      "file": "avatar-13.webp",
+      "originalSha256": "bc84a3131ba3decf2361ffe6975e2c2b054ef0f54200074f1e8972a778f5dff2"
+    },
+    {
+      "id": "14",
+      "name": "麦金蓬松短发 · 陶红贝雷帽",
+      "file": "avatar-14.webp",
+      "originalSha256": "c8d7fa5260abfa28241abfedd6235f2169fe833adebca2a2300864761fdf5143"
+    },
+    {
+      "id": "15",
+      "name": "烟灰短卷发 · 赭红圆框",
+      "file": "avatar-15.webp",
+      "originalSha256": "9f15dec36215c39109e13549bb1d8d33c3e0969b63d44922078333a6e0228177"
+    },
+    {
+      "id": "16",
+      "name": "墨黑短编发 · 奶白运动发带",
+      "file": "avatar-16.webp",
+      "originalSha256": "9ffcd421fb708b61f37355a435fa4ec90873b9d874ac7fa48fd5aaa276898de1"
+    },
+    {
+      "id": "17",
+      "name": "丁香紫精灵短发 · 金色星星发夹",
+      "file": "avatar-17.webp",
+      "originalSha256": "2549fbfb20fa97004169cb9033bfc4fe9e27d3baef2a6027bfbec45a49c581b7"
+    },
+    {
+      "id": "18",
+      "name": "玫瑰棕内扣短发 · 奶油圆框",
+      "file": "avatar-18.webp",
+      "originalSha256": "804ebae5af8ab8dbb8a307fb619eddd86eca390d68e4477b3c7b4f8d73f963c0"
+    },
+    {
+      "id": "19",
+      "name": "深棕高马尾 · 陶红蝴蝶发圈",
+      "file": "avatar-19.webp",
+      "originalSha256": "a22e68b5d49b26b71234dc9f973897bf195b7e8d84146cc5b6e1359f50888649"
+    },
+    {
+      "id": "20",
+      "name": "月白低盘发 · 梅紫小花",
+      "file": "avatar-20.webp",
+      "originalSha256": "7da97d749e1679a2870dcec4b75641f54cf4dd7b42973465166cb22825155044"
+    }
+  ]
+}

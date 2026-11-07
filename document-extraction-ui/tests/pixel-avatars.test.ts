@@ -1,8 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { avatarLibrary } from '../src/avatarLibrary.ts';
 import { createPixelAvatar, hashString } from '../src/pmdeskAvatar.ts';
-import { accountAvatarOptions, avatarDataUrl, getAccountAvatarIndex, pixelAvatarSvg, PIXEL_AVATAR_COUNT, PIXEL_AVATAR_SIZE, saveAccountAvatar } from '../src/pixelAvatars.ts';
+import { accountAvatarLabels, accountAvatarOptions, avatarDataUrl, getAccountAvatarIndex, pixelAvatarSvg, PIXEL_AVATAR_COUNT, PIXEL_AVATAR_SIZE, saveAccountAvatar } from '../src/pixelAvatars.ts';
 
 // Captured from the original PMDesk implementation, including cell order and all nine palette colors.
 const fixtures = [
@@ -14,7 +16,7 @@ const fixtures = [
   ['小郭', 1047043561, '9271fc5c8fbab3e771b9ad45c11f6602a96b678757f4c6d333628f86c7f94f5b'],
 ] as const;
 
-test('保留 PMDesk 姓名与色板映射，使用更细的 32 px 人物绘制', () => {
+test('保留旧 PMDesk 姓名与色板映射及 SVG 兼容接口', () => {
   for (const [name, hash, digest] of fixtures) {
     assert.equal(hashString(name), hash);
     assert.equal(createHash('sha256').update(JSON.stringify(createPixelAvatar(name))).digest('hex'), digest);
@@ -25,6 +27,24 @@ test('保留 PMDesk 姓名与色板映射，使用更细的 32 px 人物绘制',
     assert(!/<(?:script|image|foreignObject)\b/.test(svg));
   }
   assert.equal(PIXEL_AVATAR_SIZE, 48);
+});
+
+test('正式头像库提供 20 个独立本地 WebP，默认按姓名稳定选择且不重复', () => {
+  assert.equal(PIXEL_AVATAR_COUNT, 20);
+  assert.deepEqual(avatarLibrary.map(entry => entry.id), Array.from({ length: 20 }, (_, i) => String(i + 1).padStart(2, '0')));
+  for (const entry of avatarLibrary) {
+    const bytes = readFileSync(new URL(entry.src));
+    assert.equal(bytes.subarray(0, 4).toString(), 'RIFF');
+    assert.equal(bytes.subarray(8, 12).toString(), 'WEBP');
+  }
+  for (const [name] of fixtures) {
+    const options = accountAvatarOptions(name);
+    assert.equal(new Set(options).size, 20);
+    assert.equal(options[0], avatarDataUrl(name));
+    assert.deepEqual(new Set(options), new Set(avatarLibrary.map(entry => entry.src)));
+    assert.equal(accountAvatarLabels(name).length, 20);
+    assert.match(accountAvatarLabels(name)[0], /^默认头像：/);
+  }
 });
 
 test('默认按姓名生成，手动选择单独保存，恢复默认不保留覆盖数据', () => {
@@ -42,10 +62,18 @@ test('默认按姓名生成，手动选择单独保存，恢复默认不保留�
   assert.equal(saveAccountAvatar('user-a', 6, '小郭', storage), choices[6]);
   assert.equal(getAccountAvatarIndex('user-a', storage), 6);
   assert.equal(getAccountAvatarIndex('user-b', storage), 0);
+  values.set('wenxi.avatar.pmdesk.v1:legacy-user', '15');
+  assert.equal(getAccountAvatarIndex('legacy-user', storage), 15);
+  assert.equal(saveAccountAvatar('user-a', 19, '小郭', storage), choices[19]);
+  assert.equal(getAccountAvatarIndex('user-a', storage), 19);
   assert.equal(saveAccountAvatar('user-a', 0, '小郭', storage), choices[0]);
   assert.equal(values.has('wenxi.avatar.pmdesk.v1:user-a'), false);
   const blocked = { getItem() { throw new Error('blocked'); }, setItem() { throw new Error('blocked'); }, removeItem() { throw new Error('blocked'); } };
   assert.equal(getAccountAvatarIndex('user-a', blocked), 0);
   assert.throws(() => saveAccountAvatar('user-a', 3, '小郭', blocked));
-  for (const index of [-1, 16, .5, NaN]) assert.throws(() => saveAccountAvatar('user-a', index, '小郭', storage));
+  for (const index of [-1, 20, .5, NaN, Infinity]) assert.throws(() => saveAccountAvatar('user-a', index, '小郭', storage));
+  for (const saved of ['20', '-1', '01', '1e1', ' 2', 'NaN', '2.5', '999999999999999999999']) {
+    values.set('wenxi.avatar.pmdesk.v1:invalid', saved);
+    assert.equal(getAccountAvatarIndex('invalid', storage), 0);
+  }
 });

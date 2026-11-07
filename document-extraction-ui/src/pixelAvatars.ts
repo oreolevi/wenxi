@@ -1,21 +1,32 @@
 import { detailedAvatarSvg } from './detailedAvatar.ts';
+import { hashString } from './pmdeskAvatar.ts';
+import { avatarLibrary } from './avatarLibrary.ts';
 
-export const PIXEL_AVATAR_COUNT = 16;
+export const PIXEL_AVATAR_COUNT = avatarLibrary.length;
 export const PIXEL_AVATAR_SIZE = 48;
+// Retain the preference key and valid legacy indices when updating the artwork.
 const preferenceKey = (userId: string) => `wenxi.avatar.pmdesk.v1:${userId}`;
-// Fixed seeds are only used for opt-in alternatives. The default always uses the display name.
-const alternativeNames = Array.from({ length: PIXEL_AVATAR_COUNT - 1 }, (_, index) => `文析头像${String(index + 1).padStart(2, '0')}`);
 
+// Kept for callers of the former deterministic SVG generator; the account UI uses the library below.
 export function pixelAvatarSvg(name: string): string {
   return detailedAvatarSvg(name);
 }
 
 export function avatarDataUrl(name: string): string {
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(pixelAvatarSvg(name))}`;
+  return avatarLibrary[hashString(name) % PIXEL_AVATAR_COUNT].src;
+}
+
+function accountAvatarEntries(name: string) {
+  const defaultIndex = hashString(name) % PIXEL_AVATAR_COUNT;
+  return [avatarLibrary[defaultIndex], ...avatarLibrary.filter((_, index) => index !== defaultIndex)];
 }
 
 export function accountAvatarOptions(name: string): string[] {
-  return [name, ...alternativeNames].map(avatarDataUrl);
+  return accountAvatarEntries(name).map(entry => entry.src);
+}
+
+export function accountAvatarLabels(name: string): string[] {
+  return accountAvatarEntries(name).map((entry, index) => index === 0 ? `默认头像：${entry.name}` : entry.name);
 }
 
 type AvatarStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
@@ -27,7 +38,9 @@ function browserStorage(): AvatarStorage | undefined {
 export function getAccountAvatarIndex(userId: string, storage = browserStorage()): number {
   try {
     const saved = storage?.getItem(preferenceKey(userId));
-    return saved !== null && saved !== undefined && /^(?:[0-9]|1[0-5])$/.test(saved) ? Number(saved) : 0;
+    if (saved === null || saved === undefined || !/^(?:0|[1-9]\d*)$/.test(saved)) return 0;
+    const index = Number(saved);
+    return Number.isSafeInteger(index) && index < PIXEL_AVATAR_COUNT ? index : 0;
   } catch { return 0; }
 }
 
