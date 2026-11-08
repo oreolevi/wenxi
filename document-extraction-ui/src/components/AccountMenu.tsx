@@ -44,7 +44,7 @@ export function AccountMenu({ collapsed, onHelp, sidebarCollapsed, onSidebarChan
 
   const profile = <>
     <div className="account-profile">
-      <span className="account-profile-avatar" role="img" aria-label={`${displayName} 的头像`} title={displayName}><Avatar className="account-avatar" size={48} src={pickingAvatar ? avatarOptions[selectedAvatar] : avatar} style={accountAvatarPresentation(pickingAvatar ? avatarOptions[selectedAvatar] : avatar)} aria-hidden="true" alt="" /></span>
+      <span className="account-profile-avatar" role="img" aria-label={`${displayName} 的头像`} title={displayName}><Avatar className="account-avatar" size={52} src={pickingAvatar ? avatarOptions[selectedAvatar] : avatar} style={accountAvatarPresentation(pickingAvatar ? avatarOptions[selectedAvatar] : avatar)} aria-hidden="true" alt="" /></span>
       <div><strong>{displayName}</strong><Typography.Text type="secondary">{department}</Typography.Text></div>
       {!pickingAvatar && <Button type="link" onClick={startAvatarSelection}>更换头像</Button>}
     </div>
@@ -53,7 +53,7 @@ export function AccountMenu({ collapsed, onHelp, sidebarCollapsed, onSidebarChan
       <div className="avatar-picker-grid">
         {avatarOptions.map((src, index) => <button key={index} type="button" className="avatar-option"
           aria-label={avatarLabels[index]} title={avatarLabels[index]} aria-pressed={selectedAvatar === index} onClick={() => setSelectedAvatar(index)}>
-          <Avatar className="account-avatar" size={44} src={src} style={accountAvatarPresentation(src)} aria-hidden="true" alt="" />
+          <Avatar className="account-avatar" size={48} src={src} style={accountAvatarPresentation(src)} aria-hidden="true" alt="" />
           {selectedAvatar === index && <CheckOutlined className="avatar-option-check" />}
         </button>)}
       </div>
@@ -85,7 +85,7 @@ export function AccountMenu({ collapsed, onHelp, sidebarCollapsed, onSidebarChan
   }
   const trigger = <Button type="text" className={`account-trigger ${collapsed ? 'is-collapsed' : ''}`} aria-label={signedIn ? '账户与设置' : '登录'}
     aria-expanded={signedIn ? open : undefined} onClick={!signedIn ? () => setPanel('login') : undefined}>
-    <Avatar className="account-avatar" size={32} src={signedIn ? avatar : undefined} style={accountAvatarPresentation(signedIn ? avatar : undefined)} icon={!signedIn ? <UserOutlined /> : undefined} aria-hidden="true" alt="" />
+    <Avatar className="account-avatar" size={36} src={signedIn ? avatar : undefined} style={accountAvatarPresentation(signedIn ? avatar : undefined)} icon={!signedIn ? <UserOutlined /> : undefined} aria-hidden="true" alt="" />
     {!collapsed && <><span className="account-trigger-copy"><strong>{signedIn ? displayName : '登录账户'}</strong><span>{signedIn ? department : '进入个人工作空间'}</span></span><DownOutlined className="account-chevron" /></>}
   </Button>;
   return <>
