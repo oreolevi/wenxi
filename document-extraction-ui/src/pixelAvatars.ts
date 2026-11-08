@@ -1,6 +1,7 @@
 import { detailedAvatarSvg } from './detailedAvatar.ts';
 import { hashString } from './pmdeskAvatar.ts';
 import { avatarLibrary } from './avatarLibrary.ts';
+import type { CSSProperties } from 'react';
 
 export const PIXEL_AVATAR_COUNT = avatarLibrary.length;
 export const PIXEL_AVATAR_SIZE = 48;
@@ -27,6 +28,16 @@ export function accountAvatarOptions(name: string): string[] {
 
 export function accountAvatarLabels(name: string): string[] {
   return accountAvatarEntries(name).map((entry, index) => index === 0 ? `默认头像：${entry.name}` : entry.name);
+}
+
+export function accountAvatarPresentation(src: string | undefined): CSSProperties | undefined {
+  const display = avatarLibrary.find(entry => entry.src === src)?.display;
+  if (!display) return undefined;
+  return {
+    '--avatar-scale': display.scale,
+    '--avatar-x': `${display.x}%`,
+    '--avatar-y': `${display.y}%`,
+  } as CSSProperties;
 }
 
 type AvatarStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
